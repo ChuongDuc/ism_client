@@ -2,8 +2,7 @@
 
 import { Link as RouterLink } from 'react-router-dom';
 import { styled } from '@mui/material/styles';
-import {useState} from 'react';
-import {  Box, Card, Container, Link, Stack, Typography,Radio,RadioGroup,FormControlLabel,FormControl,FormLabel } from '@mui/material';
+import { Box, Card, Container, Link, Stack, Typography } from '@mui/material';
 import { PATH_AUTH } from '../../routes/paths';
 
 import useResponsive from '../../hooks/useResponsive';
@@ -11,7 +10,6 @@ import Page from '../../components/Page';
 import Logo from '../../components/Logo';
 import Image from '../../components/Image';
 import { LoginForm } from '../../sections/auth/login';
-import { AdminAccount, DirectorAccount,Sale1Account,TransporterManagerAccount,Driver1ManagerAccount} from '../../constant';
 
 // ----------------------------------------------------------------------
 
@@ -63,33 +61,6 @@ export default function Login() {
 
   const mdUp = useResponsive('up', 'md');
 
-  const [email,setEmail]= useState(AdminAccount.email);
-  const [pass,setPass] = useState(AdminAccount.password);
-
-  const handleChangeEmail = (e) => {
-    setEmail(e.target.value);
-    switch (e.target.value) {
-      case AdminAccount.email:
-        setPass(AdminAccount.password);
-        break;
-      case DirectorAccount.email:
-        setPass(DirectorAccount.password);
-        break;
-      case Sale1Account.email:
-        setPass(Sale1Account.password);
-        break;
-      case Driver1ManagerAccount.email:
-        setPass(Driver1ManagerAccount.password);
-        break;
-      case TransporterManagerAccount.email:
-        setPass(TransporterManagerAccount.password);
-        break;
-      default:
-        setPass(AdminAccount.password);
-        break;
-    }
-  }
-
   return (
     <Page title="Đăng nhập">
       <RootStyle>
@@ -120,20 +91,9 @@ export default function Login() {
                 </Typography>
               </Box>
             </Stack>
-            <FormControl sx={{ mb: 2 }} >
-              <FormLabel >Chọn tài khoản</FormLabel>
-              <RadioGroup
-                defaultValue={AdminAccount.email}
-                onChange={handleChangeEmail}
-              >
-                <FormControlLabel value={AdminAccount.email} control={<Radio />} label="admin-demo@tcn.com.vn" />
-                <FormControlLabel value={DirectorAccount.email} control={<Radio />} label="giamdoc-demo@tcn.com.vn" />
-                <FormControlLabel value={Sale1Account.email} control={<Radio />} label="kinhdoanh1-demo@tcn.com.vn" />
-                <FormControlLabel value={TransporterManagerAccount.email} control={<Radio />} label="dieuvan-demo@tcn.com.vn" />
-                <FormControlLabel value={Driver1ManagerAccount.email} control={<Radio />} label="laixe1-demo@tcn.com.vn" />
-              </RadioGroup>
-            </FormControl>
-            <LoginForm radioEmail={email} radioPass={pass}/>
+
+            <LoginForm />
+
             {!smUp && (
               <Typography variant="body2" align="center" sx={{ mt: 3 }}>
                 Bạn chưa có tài khoản?{' '}

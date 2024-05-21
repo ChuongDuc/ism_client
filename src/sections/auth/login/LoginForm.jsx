@@ -1,47 +1,38 @@
 // noinspection JSUnresolvedVariable,JSValidateTypes
 
 import * as Yup from 'yup';
-import PropTypes from 'prop-types';
-import { useState,useEffect,useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { Link, Stack, Alert, IconButton, InputAdornment } from '@mui/material';
+import { Alert, IconButton, InputAdornment, Link, Stack } from '@mui/material';
 import { LoadingButton } from '@mui/lab';
 import { PATH_AUTH } from '../../../routes/paths';
 import useAuth from '../../../hooks/useAuth';
 import useIsMountedRef from '../../../hooks/useIsMountedRef';
 import Iconify from '../../../components/Iconify';
-import { FormProvider, RHFTextField, RHFCheckbox } from '../../../components/hook-form';
+import { FormProvider, RHFCheckbox, RHFTextField } from '../../../components/hook-form';
 
 // ----------------------------------------------------------------------
-
-LoginForm.propTypes = {
-  radioEmail: PropTypes.string,
-  radioPass: PropTypes.string,
-}
-
-export default function LoginForm({radioEmail,radioPass}) {
+export default function LoginForm() {
   const { login } = useAuth();
 
   const isMountedRef = useIsMountedRef();
 
   const [showPassword, setShowPassword] = useState(false);
 
-
   const LoginSchema = Yup.object().shape({
-    email: Yup.string().email('Hãy nhập định dạng của email').required('Email không được để trống'),
+    account: Yup.string().required('Tài khoản không được để trống'),
     password: Yup.string().required('Mật khẩu không được để trống'),
   });
 
   const defaultValues = useMemo(
     () => ({
-      email: radioEmail,
-      password: radioPass,
+      account: '',
+      password: '',
       remember: true,
     }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [radioEmail,radioPass],
+    []
   );
 
   const methods = useForm({
@@ -58,11 +49,11 @@ export default function LoginForm({radioEmail,radioPass}) {
 
   useEffect(() => {
     reset(defaultValues);
-  }, [defaultValues,reset]);
+  }, [defaultValues, reset]);
 
   const onSubmit = async (data) => {
     try {
-      await login(data.email, data.password);
+      await login(data.account, data.password);
     } catch (error) {
       console.error(error);
       reset();
@@ -75,15 +66,14 @@ export default function LoginForm({radioEmail,radioPass}) {
   return (
     <FormProvider methods={methods} onSubmit={handleSubmit(onSubmit)}>
       <Stack spacing={3}>
-        {!!errors.afterSubmit && <Alert severity="error">{errors.afterSubmit.message}</Alert>}
+        {!!errors.afterSubmit && <Alert severity="error">{'Sai tên đăng nhập hoặc mật khẩu'}</Alert>}
 
-        <RHFTextField name="email" label="Email"  />
+        <RHFTextField name="account" label="Tài khoản" />
 
         <RHFTextField
           name="password"
           label="Mật khẩu"
           type={showPassword ? 'text' : 'password'}
-
           InputProps={{
             endAdornment: (
               <InputAdornment position="end">

@@ -7,12 +7,34 @@ import { useForm } from 'react-hook-form';
 import { Stack, Card } from '@mui/material';
 import { LoadingButton } from '@mui/lab';
 // components
+import { loader } from 'graphql.macro';
+import { useMutation } from '@apollo/client';
 import { FormProvider, RHFTextField } from '../../../../components/hook-form';
+import useAuth from '../../../../hooks/useAuth';
+
+// ----------------------------------------------------------------------
+
+const UPDATE_USER = loader('../../../../graphql/mutations/user/updateUser.graphql');
 
 // ----------------------------------------------------------------------
 
 export default function AccountChangePassword() {
   const { enqueueSnackbar } = useSnackbar();
+
+  const { user, logout } = useAuth();
+
+  const [updateUser] = useMutation(UPDATE_USER, {
+    onCompleted: () => {
+      enqueueSnackbar('Cập nhật thành công', {
+        variant: 'success',
+      });
+    },
+    onError: (error) => {
+      enqueueSnackbar(`Cập nhật không thành công. Nguyên nhân: ${error.message}`, {
+        variant: 'error',
+      });
+    },
+  });
 
   const ChangePassWordSchema = Yup.object().shape({
     oldPassword: Yup.string().required('Hãy nhập mật khẩu cũ'),
@@ -32,18 +54,31 @@ export default function AccountChangePassword() {
   });
 
   const {
+    watch,
     reset,
     handleSubmit,
     formState: { isSubmitting },
   } = methods;
 
+  const values = watch();
+
   const onSubmit = async () => {
     try {
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      await updateUser({
+        variables: {
+          input: {
+            id: parseInt(user.id, 10),
+            oldPassword: values.oldPassword,
+            newPassword: values.newPassword,
+          },
+        },
+      });
       reset();
-      enqueueSnackbar('Update success!');
+      await logout();
     } catch (error) {
-      console.error(error);
+      enqueueSnackbar(`Cập nhật không thành công. ${error.message}`, {
+        variant: 'error',
+      });
     }
   };
 

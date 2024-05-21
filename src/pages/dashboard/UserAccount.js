@@ -6,18 +6,12 @@ import { PATH_DASHBOARD } from '../../routes/paths';
 import useTabs from '../../hooks/useTabs';
 import useSettings from '../../hooks/useSettings';
 // _mock_
-import { _userAbout } from '../../_mock';
 // components
 import Page from '../../components/Page';
 import Iconify from '../../components/Iconify';
 import HeaderBreadcrumbs from '../../components/HeaderBreadcrumbs';
 // sections
-import {
-  AccountChangePassword,
-  AccountGeneral,
-  AccountNotifications,
-  AccountSocialLinks,
-} from '../../sections/@dashboard/user/account';
+import { AccountChangePassword, AccountGeneral } from '../../sections/@dashboard/user/account';
 
 // ----------------------------------------------------------------------
 
@@ -33,16 +27,6 @@ export default function UserAccount() {
       component: <AccountGeneral />,
     },
     {
-      value: 'Thông báo',
-      icon: <Iconify icon={'eva:bell-fill'} width={20} height={20} />,
-      component: <AccountNotifications />,
-    },
-    {
-      value: 'Trang liên kết',
-      icon: <Iconify icon={'eva:share-fill'} width={20} height={20} />,
-      component: <AccountSocialLinks myProfile={_userAbout} />,
-    },
-    {
       value: 'Đổi mật khẩu',
       icon: <Iconify icon={'ic:round-vpn-key'} width={20} height={20} />,
       component: <AccountChangePassword />,
@@ -50,12 +34,12 @@ export default function UserAccount() {
   ];
 
   return (
-    <Page title="User: Account Settings">
+    <Page title="Người dùng: Thiết lập tài khoản">
       <Container maxWidth={themeStretch ? false : 'lg'}>
         <HeaderBreadcrumbs
           heading="Tài khoản"
           links={[
-            { name: 'Thông tin tổng hợp', href: PATH_DASHBOARD.root },
+            { name: 'Chung', href: PATH_DASHBOARD.root },
             { name: 'Người dùng', href: PATH_DASHBOARD.user.root },
             { name: 'Thiết lập tài khoản' },
           ]}

@@ -1,7 +1,13 @@
+// noinspection JSValidateTypes
+
 import PropTypes from 'prop-types';
-import { Stack, InputAdornment, TextField, MenuItem } from '@mui/material';
+import { Box, Button, InputAdornment, MenuItem, Stack, TextField } from '@mui/material';
 // components
+import { Link as RouterLink } from 'react-router-dom';
 import Iconify from '../../../../components/Iconify';
+import { Role } from '../../../../constant';
+import { PATH_DASHBOARD } from '../../../../routes/paths';
+import useAuth from '../../../../hooks/useAuth';
 
 // ----------------------------------------------------------------------
 
@@ -14,12 +20,14 @@ UserTableToolbar.propTypes = {
 };
 
 export default function UserTableToolbar({ filterName, filterRole, onFilterName, onFilterRole, optionsRole }) {
+  const { user } = useAuth();
   return (
-    <Stack spacing={2} direction={{ xs: 'column', sm: 'row' }} sx={{ py: 2.5, px: 3 }}>
+    <Stack spacing={2} direction={{ xs: 'column', sm: 'row' }} sx={{ py: 2.5, px: 1 }}>
       <TextField
+        size={'small'}
         fullWidth
         select
-        label="Role"
+        label="Chức vụ"
         value={filterRole}
         onChange={onFilterRole}
         SelectProps={{
@@ -48,8 +56,8 @@ export default function UserTableToolbar({ filterName, filterRole, onFilterName,
           </MenuItem>
         ))}
       </TextField>
-
       <TextField
+        size={'small'}
         fullWidth
         value={filterName}
         onChange={(event) => onFilterName(event.target.value)}
@@ -62,6 +70,20 @@ export default function UserTableToolbar({ filterName, filterRole, onFilterName,
           ),
         }}
       />
+      {(user?.role === Role.admin || user?.role === Role.director) && (
+        <Box sx={{ display: 'flex', justifyContent: { xs: 'space-between', sm: 'left' }, mb: 1, gap: 1.5 }}>
+          <Button
+            size={'small'}
+            variant="contained"
+            sx={{ minWidth: '145px' }}
+            component={RouterLink}
+            to={PATH_DASHBOARD.user.new}
+            startIcon={<Iconify icon={'eva:plus-fill'} />}
+          >
+            Tạo mới
+          </Button>
+        </Box>
+      )}
     </Stack>
   );
 }

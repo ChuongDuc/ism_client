@@ -17,11 +17,10 @@ export default function TableSelectedActions({ dense, actions, rowCount, numSele
       direction="row"
       alignItems="center"
       sx={{
-        px: 2,
         top: 0,
         right: 8,
         zIndex: 9,
-        height: 58,
+        height: 38,
         borderRadius: 1,
         position: 'absolute',
         width: 'calc(100% - 16px)',
@@ -33,6 +32,7 @@ export default function TableSelectedActions({ dense, actions, rowCount, numSele
       }}
     >
       <Checkbox
+        size="small"
         indeterminate={numSelected > 0 && numSelected < rowCount}
         checked={rowCount > 0 && numSelected === rowCount}
         onChange={(event) => onSelectAllRows(event.target.checked)}

@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import { useEffect } from 'react';
+import { memo, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { styled, useTheme } from '@mui/material/styles';
 import { Box, Stack, Drawer } from '@mui/material';
@@ -34,7 +34,7 @@ NavbarVertical.propTypes = {
   onCloseSidebar: PropTypes.func,
 };
 
-export default function NavbarVertical({ isOpenSidebar, onCloseSidebar }) {
+function NavbarVertical({ isOpenSidebar, onCloseSidebar }) {
   const { user } = useAuth();
   const theme = useTheme();
 
@@ -136,3 +136,4 @@ export default function NavbarVertical({ isOpenSidebar, onCloseSidebar }) {
     </RootStyle>
   );
 }
+export default memo(NavbarVertical);
