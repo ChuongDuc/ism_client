@@ -1,4 +1,5 @@
-import { Role } from './role';
+// eslint-disable-next-line import/named
+import { VietnameseRoleName, Role, RoleNumberList } from './role';
 
 export const AdminAccount = {
   id: 'admin-01',
@@ -206,3 +207,48 @@ export const driverUserList = [
 ];
 
 export const onlyDriverUserList = [Driver1ManagerAccount, Driver2ManagerAccount, Driver4ManagerAccount];
+
+export const roleNumberToRole = (roleNumber) => {
+  switch (roleNumber) {
+    case RoleNumberList.director:
+      return Role.director;
+    case RoleNumberList.admin:
+      return Role.admin;
+    case RoleNumberList.manager:
+      return Role.manager;
+    case RoleNumberList.accountant:
+      return Role.accountant;
+    case RoleNumberList.sales:
+      return Role.sales;
+    case RoleNumberList.transporterManager:
+      return Role.transporterManager;
+    case RoleNumberList.driver:
+      return Role.driver;
+    case RoleNumberList.assistantDriver:
+      return Role.assistantDriver;
+    default:
+      return '';
+  }
+};
+export const roleTypeToVietnameseRoleName = (roleType) => {
+  switch (roleType) {
+    case Role.director:
+      return VietnameseRoleName.director;
+    case Role.admin:
+      return VietnameseRoleName.admin;
+    case Role.manager:
+      return VietnameseRoleName.manager;
+    case Role.accountant:
+      return VietnameseRoleName.accountant;
+    case Role.sales:
+      return VietnameseRoleName.sales;
+    case Role.transporterManager:
+      return VietnameseRoleName.transporterManager;
+    case Role.driver:
+      return VietnameseRoleName.driver;
+    case Role.assistantDriver:
+      return VietnameseRoleName.assistantDriver;
+    default:
+      return '';
+  }
+};

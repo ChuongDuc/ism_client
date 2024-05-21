@@ -1,11 +1,15 @@
-// noinspection JSCheckFunctionSignatures,JSValidateTypes
+// noinspection JSCheckFunctionSignatures,JSXUnresolvedComponent
 
 import { createContext, useEffect, useReducer } from 'react';
 import PropTypes from 'prop-types';
-// utils
-import axios from '../utils/axios';
+import { loader } from 'graphql.macro';
+import { useLazyQuery } from '@apollo/client';
 import { isValidToken, setSession } from '../utils/jwt';
+import { SESSION_KEY } from '../constant';
 
+// ----------------------------------------------------------------------
+const LOGIN = loader('../graphql/queries/auth/login.graphql');
+const PROFILE = loader('../graphql/queries/user/profile.graphql');
 // ----------------------------------------------------------------------
 
 const initialState = {
@@ -38,15 +42,6 @@ const handlers = {
     isAuthenticated: false,
     user: null,
   }),
-  REGISTER: (state, action) => {
-    const { user } = action.payload;
-
-    return {
-      ...state,
-      isAuthenticated: true,
-      user,
-    };
-  },
 };
 
 const reducer = (state, action) => (handlers[action.type] ? handlers[action.type](state, action) : state);
@@ -56,7 +51,6 @@ const AuthContext = createContext({
   method: 'jwt',
   login: () => Promise.resolve(),
   logout: () => Promise.resolve(),
-  register: () => Promise.resolve(),
 });
 
 // ----------------------------------------------------------------------
@@ -68,23 +62,48 @@ AuthProvider.propTypes = {
 function AuthProvider({ children }) {
   const [state, dispatch] = useReducer(reducer, initialState);
 
+  const [loginFn] = useLazyQuery(LOGIN, {
+    onCompleted: async (res) => {
+      if (res) {
+        return res;
+      }
+      return null;
+    },
+  });
+
+  const [fetchProfile] = useLazyQuery(PROFILE, {
+    fetchPolicy: 'network-only',
+    onCompleted: async (res) => {
+      if (res) {
+        return res.userInfo;
+      }
+      return null;
+    },
+  });
+
   useEffect(() => {
     const initialize = async () => {
       try {
-        const accessToken = window.localStorage.getItem('accessToken');
+        const accessToken = window.localStorage.getItem(SESSION_KEY.ACCESS_TOKEN);
 
         if (accessToken && isValidToken(accessToken)) {
           setSession(accessToken);
-
-          const response = await axios.get('/api/account/my-account');
-          console.log('response: ', response);
-          const { user } = response.data;
-
+          const fetchedData = await fetchProfile();
+          const user = fetchedData.me ?? fetchedData.data.me;
+          const currentUser = {
+            ...user,
+            id: `${user?.id}`,
+            role: user?.role,
+            displayName: user?.fullName,
+            avatarURL: user?.avatarURL,
+            status: user?.isActive === true ? 'Đang hoạt động' : 'Ngừng hoạt động',
+            phone: user?.phoneNumber,
+          };
           dispatch({
             type: 'INITIALIZE',
             payload: {
               isAuthenticated: true,
-              user,
+              user: currentUser,
             },
           });
         } else {
@@ -109,38 +128,34 @@ function AuthProvider({ children }) {
     };
 
     initialize().catch((e) => console.error(e));
-  }, []);
+  }, [fetchProfile]);
 
-  const login = async (email, password) => {
-    const response = await axios.post('/api/account/login', {
-      email,
-      password,
+  const login = async (account, password) => {
+    const response = await loginFn({
+      variables: {
+        input: {
+          account,
+          password,
+        },
+      },
+      fetchPolicy: 'cache-and-network',
     });
-    const { accessToken, user } = response.data;
-
-    setSession(accessToken);
+    const { token, user } = response.data.login;
+    const currentUser = {
+      ...user,
+      id: `${user?.id}`,
+      role: user?.role,
+      displayName: user?.fullName,
+      avatarURL: user?.avatarURL,
+      status: user?.isActive === true ? 'Đang hoạt động' : 'Ngừng hoạt động',
+      phone: user?.phoneNumber,
+    };
+    setSession(token);
     dispatch({
       type: 'LOGIN',
       payload: {
-        user,
-      },
-    });
-  };
-
-  const register = async (email, password, firstName, lastName) => {
-    const response = await axios.post('/api/account/register', {
-      email,
-      password,
-      firstName,
-      lastName,
-    });
-    const { accessToken, user } = response.data;
-
-    window.localStorage.setItem('accessToken', accessToken);
-    dispatch({
-      type: 'REGISTER',
-      payload: {
-        user,
+        isAuthenticated: true,
+        user: currentUser,
       },
     });
   };
@@ -157,7 +172,6 @@ function AuthProvider({ children }) {
         method: 'jwt',
         login,
         logout,
-        register,
       }}
     >
       {children}

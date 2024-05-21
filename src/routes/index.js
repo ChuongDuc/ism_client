@@ -95,7 +95,7 @@ export default function Router() {
             { path: 'danh-sach', element: <UserList /> },
             { path: 'cards', element: <UserCards /> },
             { path: 'profile', element: <UserProfile /> },
-            { path: ':id/chinh-sua', element: <UserCreate /> },
+            { path: ':id/chinh-sua', element: <UserUpdate /> },
           ],
         },
 
@@ -251,6 +251,7 @@ const UserCards = Loadable(lazy(() => import('../pages/dashboard/UserCards')));
 const UserList = Loadable(lazy(() => import('../pages/dashboard/UserList')));
 const UserAccount = Loadable(lazy(() => import('../pages/dashboard/UserAccount')));
 const UserCreate = Loadable(lazy(() => import('../pages/dashboard/UserCreate')));
+const UserUpdate = Loadable(lazy(() => import('../pages/dashboard/UserUpdate')));
 
 // CUSTOMER
 const CustomerList = Loadable(lazy(() => import('../pages/dashboard/CustomerList')));

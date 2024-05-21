@@ -17,7 +17,14 @@ yarn install
 ```
 
 ## 2.Start
-
+Create file **_.env_** with following content then copy to root folder **_`ism_client`_**
+```shell
+GENERATE_SOURCEMAP=false
+PORT=3000
+# APOLLO
+REACT_APP_APOLLO_HTTP_ENDPOINT=http://localhost:4000/graphql
+REACT_APP_SUBSCRIPTION_ENDPOINT=ws://localhost:4000/subscriptions
+````
 ```sh
 npm start
 or

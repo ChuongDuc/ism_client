@@ -1,0 +1,506 @@
+# This file was generated. Do not edit manually.
+
+schema {
+    query: Query
+    mutation: Mutation
+    subscription: Subscription
+}
+
+type Category {
+    createdAt: Date
+    id: Int
+    name: String
+    updatedAt: Date
+}
+
+type Customer {
+    address: String
+    company: String
+    createdAt: Date
+    email: String
+    id: Int!
+    name: String
+    orders: [Order]
+    phoneNumber: String!
+    updatedAt: Date
+}
+
+type CustomerConnection {
+    edges: [CustomerEdge]
+    pageInfo: PageInfo!
+    totalCount: Int!
+}
+
+type CustomerEdge {
+    cursor: String!
+    node: Customer
+}
+
+type Inventory {
+    code: String!
+    createdAt: Date
+    fileName: String!
+    id: Int!
+    productName: String!
+    quantity: Float!
+    unit: String!
+    updatedAt: Date
+    weight: Float
+}
+
+type InventoryConnection {
+    edges: [InventoryEdge]
+    pageInfo: PageInfo!
+    totalCount: Int!
+}
+
+type InventoryEdge {
+    cursor: String!
+    node: Inventory
+}
+
+type ItemGroup {
+    createdAt: Date
+    description: String
+    id: Int!
+    name: String
+    orderDetailList: [OrderDetail!]
+    updatedAt: Date
+}
+
+type Mutation {
+    createCategory(input: CreateCategoryInput!): Category!
+    createCustomer(input: CreateCustomerInput!): Customer!
+    createOrder(input: CreateOrderInput!): Order!
+    createProduct(input: CreateProductInput!): Product!
+    createUser(input: CreateUserInput!): User!
+    deleteCustomer(input: DeleteCustomerInput!): SuccessResponse!
+    deleteProductById(input: DeleteProductByIdInput!): SuccessResponse!
+    deleteUser(input: DeleteUserInput!): SuccessResponse!
+    importFileExcelInventory(input: ImportFileExcelInventoryInput!): [Inventory]!
+    importFileExcelProducts(input: ImportFileExcelProductsInput!): [Product]!
+    resetPassword(input: ResetPasswordInput!): SuccessResponse!
+    updateCategory(input: UpdateCategoryInput!): SuccessResponse!
+    updateCustomer(input: UpdateCustomerInput!): SuccessResponse!
+    updateOrder(input: UpdateOrderInput!): SuccessResponse!
+    updateProductById(input: UpdateProductByIdInput!): SuccessResponse!
+    updateProductPriceById(input: UpdateProductPriceByIdInput!): SuccessResponse!
+    updateStatusUserNotification(input: UpdateStatusUserNotificationInput!): SuccessResponse!
+    updateUser(input: UpdateUserInput!): SuccessResponse!
+}
+
+type Notification {
+    Order: Order
+    content: String!
+    createdAt: Date!
+    event: NotificationEvent!
+    id: Int!
+    updatedAt: Date!
+}
+
+type NotificationResponse {
+    message: String!
+    notification: Notification
+    order: Order
+}
+
+type Order {
+    VAT: Float
+    createdAt: Date
+    customer: Customer!
+    deliverAddress: String
+    freightPrice: Float
+    id: Int!
+    invoiceNo: String!
+    itemGroupList: [ItemGroup]
+    paymentList: [PaymentInfo]
+    remainingPaymentMoney: Float
+    sale: User!
+    status: StatusOrder
+    totalMoney: Float
+    updatedAt: Date
+}
+
+type OrderConnection {
+    edges: [OrderEdge]
+    pageInfo: PageInfo!
+    totalCount: Int!
+}
+
+type OrderDetail {
+    createdAt: Date
+    description: String
+    id: Int!
+    itemGroup: ItemGroup!
+    priceProduct: Float!
+    product: Product!
+    quantity: Float!
+    totalWeight: Float
+    updatedAt: Date
+    weightProduct: Float
+}
+
+type OrderEdge {
+    cursor: String!
+    node: Order
+}
+
+type PageInfo {
+    endCursor: Cursor
+    hasNextPage: Boolean!
+}
+
+type PaymentInfo {
+    createdAt: Date
+    customer: Customer!
+    description: String
+    id: Int!
+    money: Float
+    order: Order!
+    updatedAt: Date
+}
+
+type Product {
+    category: Category!
+    code: String
+    createdAt: Date
+    description: String
+    height: Float!
+    id: Int!
+    name: String!
+    price: Float!
+    unit: Unit
+    updatedAt: Date
+    weight: Float!
+    width: Float
+}
+
+type ProductConnection {
+    edges: [ProductEdge]
+    pageInfo: PageInfo!
+    totalCount: Int!
+}
+
+type ProductEdge {
+    cursor: String!
+    node: Product
+}
+
+type Query {
+    filterAllOrder(input: FilterAllOrderInput!): OrderConnection!
+    getAllCategory: [Category]!
+    getUserById(userId: Int!): User!
+    listAllCustomer(input: ListAllCustomerInput!): CustomerConnection!
+    listAllInventory(input: ListAllInventoryInput!): InventoryConnection!
+    listAllProducts(input: ListAllProductsInput!): ProductConnection!
+    listArrayUserNotification(input: ListArrayUserNotificationInput!): [UserNotification]!
+    listUserNotification(input: ListUserNotificationInput!): UserNotificationConnection!
+    login(input: UserLoginInput!): UserLoginResponse!
+    me: User!
+    productDetail(input: ProductDetailInput!): Product!
+    users(input: UsersInput!): UserConnection!
+}
+
+type Subscription {
+    subscribeNotifications(input: SubscribeNotificationsInput!): NotificationResponse!
+}
+
+type User {
+    address: String
+    avatarURL: String
+    createdAt: Date
+    email: String
+    firstName: String!
+    fullName: String!
+    id: Int!
+    isActive: Boolean
+    lastName: String!
+    phoneNumber: String!
+    role: Role
+    updatedAt: Date
+    userName: String!
+}
+
+type UserConnection {
+    edges: [UserEdge]
+    pageInfo: PageInfo!
+    totalCount: Int!
+}
+
+type UserEdge {
+    cursor: String!
+    node: User
+}
+
+type UserLoginResponse {
+    token: String!
+    user: User!
+}
+
+type UserNotification {
+    createdAt: Date
+    idUserNotification: Int!
+    isRead: Boolean!
+    notification: Notification!
+    updatedAt: Date
+    user: User!
+}
+
+type UserNotificationConnection {
+    edges: [UserNotificationEdge]
+    pageInfo: PageInfo!
+    totalCount: Int!
+}
+
+type UserNotificationEdge {
+    cursor: String!
+    node: UserNotification
+}
+
+enum NotificationEvent {
+    Common
+    NewMessage
+    NewOrder
+    OrderStatusChanged
+}
+
+enum Role {
+    Accountant
+    Admin
+    AssistantDriver
+    Director
+    Driver
+    Manager
+    Sales
+    TransporterManager
+}
+
+enum StatusOrder {
+    creatNew
+    createExportOrder
+    delivery
+    done
+    paid
+    paymentConfirmation
+    priceQuotation
+    successDelivery
+}
+
+enum SuccessResponse {
+    success
+}
+
+enum Unit {
+    cai
+    chiec
+    cuon
+    kg
+    m
+    m2
+    md
+    pipe
+    plate
+}
+
+scalar Cursor
+
+scalar Date
+
+scalar JSON
+
+scalar Upload
+
+input CreateCategoryInput {
+    name: String!
+}
+
+input CreateCustomerInput {
+    address: String
+    company: String
+    email: String
+    name: String
+    phoneNumber: String!
+}
+
+input CreateOrderInput {
+    VAT: Float
+    customerId: Int!
+    saleUserId: Int!
+}
+
+input CreateProductInput {
+    categoryId: Int!
+    code: String
+    description: String
+    height: Float!
+    price: Float!
+    productName: String!
+    unit: Unit
+    weight: Float!
+}
+
+input CreateUserInput {
+    address: String
+    avatar: Upload
+    email: String
+    firstName: String!
+    lastName: String!
+    password: String!
+    phoneNumber: String!
+    role: Role!
+    userName: String!
+}
+
+input DeleteCustomerInput {
+    ids: [Int!]!
+}
+
+input DeleteProductByIdInput {
+    productId: [Int!]!
+}
+
+input DeleteUserInput {
+    ids: [Int!]!
+}
+
+input FilterAllOrderInput {
+    args: PaginationInput
+    createAt: filterDate
+    queryString: String
+    saleId: Int
+}
+
+input ImportFileExcelInventoryInput {
+    fileExcelInventory: Upload!
+    fileName: String!
+}
+
+input ImportFileExcelProductsInput {
+    categoryId: Int!
+    fileExcelProducts: Upload!
+}
+
+input ListAllCustomerInput {
+    args: PaginationInput
+    searchQuery: String
+}
+
+input ListAllInventoryInput {
+    args: PaginationInput
+    searchQuery: String
+}
+
+input ListAllProductsInput {
+    args: PaginationInput
+    category: Int
+    name: String
+    unit: Unit
+}
+
+input ListArrayUserNotificationInput {
+    event: NotificationEvent
+    userId: Int!
+}
+
+input ListUserNotificationInput {
+    args: PaginationInput
+    event: NotificationEvent
+    userId: Int!
+}
+
+input PaginationInput {
+    after: Cursor
+    before: Cursor
+    first: Int
+    last: Int
+}
+
+input ProductDetailInput {
+    id: Int!
+}
+
+input ResetPasswordInput {
+    userId: Int!
+}
+
+input SubscribeNotificationsInput {
+    "excludingEvent: Khi user không muốn nhận thông từ 1 sự kiện nào đó"
+    excludingEvent: [NotificationEvent!]
+    "#### User Id: ID của user sẽ nhận đc các thông báo"
+    userId: Int!
+}
+
+input UpdateCategoryInput {
+    id: Int!
+    name: String
+}
+
+input UpdateCustomerInput {
+    address: String
+    company: String
+    email: String
+    id: Int!
+    name: String
+    phoneNumber: String
+}
+
+input UpdateOrderInput {
+    VAT: Float
+    customerId: Int
+    driverUserId: Int
+    orderId: Int!
+    saleUserId: Int
+    status: StatusOrder
+}
+
+input UpdateProductByIdInput {
+    categoryId: Int!
+    height: Float
+    name: String
+    price: Float
+    productId: Int!
+    unit: Unit
+    weight: Float
+}
+
+input UpdateProductPriceByIdInput {
+    price: Float
+    productId: [Int!]!
+}
+
+input UpdateStatusUserNotificationInput {
+    isRead: Boolean!
+    userNotificationIds: [Int!]!
+}
+
+input UpdateUserInput {
+    address: String
+    avatarURL: Upload
+    email: String
+    firstName: String
+    id: Int!
+    isActive: Boolean
+    lastName: String
+    newPassword: String
+    oldPassword: String
+    phoneNumber: String
+    role: Role
+    userName: String
+}
+
+input UserLoginInput {
+    account: String!
+    password: String!
+}
+
+input UsersInput {
+    args: PaginationInput
+    isActive: Boolean
+    role: Role
+    searchQuery: String
+}
+
+input filterDate {
+    endAt: Date!
+    startAt: Date!
+}

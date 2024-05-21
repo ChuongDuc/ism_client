@@ -25,3 +25,18 @@ export function fShortenNumber(number) {
 export function fData(number) {
   return numeral(number).format('0.0 b');
 }
+
+export function convertStringToNumber(str) {
+  if (typeof str === 'string') {
+    const newValue = str.replace(/,/g, '');
+    const parsedValue = parseInt(newValue, 10);
+
+    return Number.isNaN(parsedValue) ? 0 : parsedValue;
+  }
+
+  if (typeof str === 'number') {
+    return str;
+  }
+
+  return 0;
+}

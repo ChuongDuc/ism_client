@@ -1,6 +1,6 @@
 {
-  "name": "sm-react-client",
-  "author": "q-team",
+  "name": "ism-react-client",
+  "author": "chuongduc",
   "version": "1.0.0",
   "description": "React Javascript Version",
   "private": true,
@@ -37,6 +37,7 @@
     ]
   },
   "dependencies": {
+    "@apollo/client": "^3.8.3",
     "@auth0/auth0-spa-js": "^1.20.1",
     "@emotion/cache": "^11.7.1",
     "@emotion/react": "^11.8.2",
@@ -57,6 +58,7 @@
     "@turf/bbox": "^6.5.0",
     "amazon-cognito-identity-js": "^5.2.8",
     "apexcharts": "^3.33.2",
+    "apollo-upload-client": "^17.0.0",
     "assert": "^2.0.0",
     "autosuggest-highlight": "^3.2.1",
     "axios": "^0.26.1",
@@ -72,6 +74,10 @@
     "emoji-mart": "^3.0.0",
     "firebase": "^9.6.8",
     "framer-motion": "^6.2.8",
+    "graphql": "^16.8.0",
+    "graphql-tag": "^2.12.6",
+    "graphql-ws": "^5.14.0",
+    "graphql.macro": "^1.4.2",
     "highlight.js": "^11.5.0",
     "history": "^5.3.0",
     "i18next": "^21.6.14",
@@ -120,7 +126,7 @@
     "uuid": "^9.0.0",
     "web-vitals": "^2.1.4",
     "worker-loader": "^3.0.8",
-    "yup": "^0.32.11"
+    "yup": "^1.2.0"
   },
   "devDependencies": {
     "@babel/core": "^7.17.5",

@@ -33,3 +33,10 @@ export const DeliveryStatus = {
 };
 
 export const AllLabel = 'Tất cả';
+
+export const encodeFileNameToUtf8 = (fileName) => {
+  if (fileName) {
+    return Buffer.from(fileName, 'latin1').toString('utf8');
+  }
+  return 'File';
+};

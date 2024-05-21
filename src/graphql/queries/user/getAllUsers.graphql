@@ -1,0 +1,28 @@
+query Users($input: UsersInput!) {
+  users(input: $input){
+    edges {
+      cursor
+      node {
+        id,
+        email,
+        userName,
+        phoneNumber,
+        firstName,
+        lastName,
+        fullName,
+        role,
+        address,
+        avatarURL,
+        isActive,
+        createdAt,
+        updatedAt
+      }
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+    }
+    totalCount
+  }
+
+}
