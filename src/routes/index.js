@@ -207,7 +207,7 @@ export default function Router() {
     {
       path: '/',
       element: <MainLayout />,
-      children: [{ element: <HomePage />, index: true }],
+      children: [{ element: <Navigate to={PATH_AFTER_LOGIN} replace />, index: true }],
     },
     { path: '*', element: <Navigate to="/404" replace /> },
   ]);
@@ -261,7 +261,6 @@ const CustomerCreate = Loadable(lazy(() => import('../pages/dashboard/CustomerCr
 const Calendar = Loadable(lazy(() => import('../pages/dashboard/Calendar')));
 
 // MAIN
-const HomePage = Loadable(lazy(() => import('../pages/Home')));
 const ComingSoon = Loadable(lazy(() => import('../pages/ComingSoon')));
 const Maintenance = Loadable(lazy(() => import('../pages/Maintenance')));
 const Page500 = Loadable(lazy(() => import('../pages/Page500')));

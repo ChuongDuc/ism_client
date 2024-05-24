@@ -18,10 +18,6 @@ const MENU_OPTIONS = [
     linkTo: '/',
   },
   {
-    label: 'Thông tin tài khoản',
-    linkTo: PATH_DASHBOARD.user.profile,
-  },
-  {
     label: 'Cài đặt',
     linkTo: PATH_DASHBOARD.userAccount,
   },

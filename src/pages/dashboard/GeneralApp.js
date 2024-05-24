@@ -7,7 +7,6 @@ import {
   AppAreaInstalled,
   AppNewInvoice,
   AppTopAuthors,
-  AppWelcome,
   AppWidgetSummary,
 } from '../../sections/@dashboard/general/app';
 import { Role } from '../../constant';
@@ -20,13 +19,9 @@ export default function GeneralApp() {
   const { themeStretch } = useSettings();
 
   return (
-    <Page title="General: App">
+    <Page title="Thông tin tổng hợp">
       <Container maxWidth={themeStretch ? false : 'xl'}>
         <Grid container spacing={3}>
-          <Grid item xs={12}>
-            <AppWelcome displayName={user?.displayName} />
-          </Grid>
-
           {user.role === Role.director && (
             <>
               <Grid item xs={12} md={4}>

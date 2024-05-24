@@ -60,7 +60,7 @@ export const adminNavConfig = [
         children: [
           { title: 'Danh sách', path: PATH_DASHBOARD.customer.list },
           { title: 'Tạo mới', path: PATH_DASHBOARD.customer.new },
-          { title: 'Cập nhật', path: PATH_DASHBOARD.customer.demoEdit },
+          // { title: 'Cập nhật', path: PATH_DASHBOARD.customer.demoEdit },
         ],
       },
       // product
@@ -90,59 +90,59 @@ export const adminNavConfig = [
   },
   // Vận tải
   // ----------------------------------------------------------------------
-  {
-    subheader: 'Vận tải',
-    items: [
-      {
-        title: 'Lệnh xuất hàng',
-        path: PATH_DASHBOARD.deliveryOrder.root,
-        icon: ICONS.cart,
-        children: [
-          { title: 'Danh sách', path: PATH_DASHBOARD.deliveryOrder.list },
-          { title: 'Cập nhật', path: PATH_DASHBOARD.deliveryOrder.demoEdit },
-        ],
-      },
-      {
-        title: 'Xe, Phương tiện',
-        path: PATH_DASHBOARD.transportation.root,
-        icon: ICONS.cart,
-        children: [
-          { title: 'Danh sách', path: PATH_DASHBOARD.transportation.list },
-          { title: 'Tạo mới', path: PATH_DASHBOARD.transportation.new },
-          { title: 'Cập nhật', path: PATH_DASHBOARD.transportation.demoEdit },
-        ],
-      },
-      {
-        title: 'Lái xe, phụ xe',
-        path: PATH_DASHBOARD.driver.root,
-        icon: ICONS.customer,
-        children: [
-          { title: 'Danh sách', path: PATH_DASHBOARD.driver.list },
-          { title: 'Tạo mới', path: PATH_DASHBOARD.driver.new },
-          { title: 'Cập nhật', path: PATH_DASHBOARD.driver.demoEdit },
-        ],
-      },
-      { title: 'Tổng hợp hàng tháng', path: '#', icon: ICONS.analytics },
-    ],
-  },
+  // {
+  //   subheader: 'Vận tải',
+  //   items: [
+  //     {
+  //       title: 'Lệnh xuất hàng',
+  //       path: PATH_DASHBOARD.deliveryOrder.root,
+  //       icon: ICONS.cart,
+  //       children: [
+  //         { title: 'Danh sách', path: PATH_DASHBOARD.deliveryOrder.list },
+  //         { title: 'Cập nhật', path: PATH_DASHBOARD.deliveryOrder.demoEdit },
+  //       ],
+  //     },
+  //     {
+  //       title: 'Xe, Phương tiện',
+  //       path: PATH_DASHBOARD.transportation.root,
+  //       icon: ICONS.cart,
+  //       children: [
+  //         { title: 'Danh sách', path: PATH_DASHBOARD.transportation.list },
+  //         { title: 'Tạo mới', path: PATH_DASHBOARD.transportation.new },
+  //         { title: 'Cập nhật', path: PATH_DASHBOARD.transportation.demoEdit },
+  //       ],
+  //     },
+  //     {
+  //       title: 'Lái xe, phụ xe',
+  //       path: PATH_DASHBOARD.driver.root,
+  //       icon: ICONS.customer,
+  //       children: [
+  //         { title: 'Danh sách', path: PATH_DASHBOARD.driver.list },
+  //         { title: 'Tạo mới', path: PATH_DASHBOARD.driver.new },
+  //         { title: 'Cập nhật', path: PATH_DASHBOARD.driver.demoEdit },
+  //       ],
+  //     },
+  //     { title: 'Tổng hợp hàng tháng', path: '#', icon: ICONS.analytics },
+  //   ],
+  // },
   // APP
   // ----------------------------------------------------------------------
-  {
-    subheader: 'Chức năng',
-    items: [
-      {
-        title: 'Forum',
-        path: PATH_DASHBOARD.blog.root,
-        icon: ICONS.blog,
-        children: [
-          { title: 'Tin tức', path: PATH_DASHBOARD.blog.posts },
-          { title: 'Chi tiết', path: PATH_DASHBOARD.blog.demoView },
-          { title: 'Tạo mới', path: PATH_DASHBOARD.blog.new },
-        ],
-      },
-      { title: 'Lịch làm việc', path: PATH_DASHBOARD.calendar, icon: ICONS.calendar },
-    ],
-  },
+  // {
+  //   subheader: 'Chức năng',
+  //   items: [
+  //     {
+  //       title: 'Forum',
+  //       path: PATH_DASHBOARD.blog.root,
+  //       icon: ICONS.blog,
+  //       children: [
+  //         { title: 'Tin tức', path: PATH_DASHBOARD.blog.posts },
+  //         { title: 'Chi tiết', path: PATH_DASHBOARD.blog.demoView },
+  //         { title: 'Tạo mới', path: PATH_DASHBOARD.blog.new },
+  //       ],
+  //     },
+  //     { title: 'Lịch làm việc', path: PATH_DASHBOARD.calendar, icon: ICONS.calendar },
+  //   ],
+  // },
 ];
 
 export const directorNavConfig = [
