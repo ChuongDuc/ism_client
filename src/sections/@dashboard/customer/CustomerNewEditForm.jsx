@@ -2,17 +2,22 @@
 
 import PropTypes from 'prop-types';
 import * as Yup from 'yup';
-import { useCallback, useEffect, useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useSnackbar } from 'notistack';
 import { useNavigate } from 'react-router-dom';
-import { Controller, useForm } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { LoadingButton } from '@mui/lab';
-import { Box, Card, FormControlLabel, Grid, Stack, Switch, Typography } from '@mui/material';
-import { fData } from '../../../utils/formatNumber';
+import { Box, Card, Grid, Stack } from '@mui/material';
+import { loader } from 'graphql.macro';
+import { useMutation } from '@apollo/client';
 import { PATH_DASHBOARD } from '../../../routes/paths';
-import Label from '../../../components/Label';
-import { FormProvider, RHFTextField, RHFUploadAvatar } from '../../../components/hook-form';
+import { FormProvider, RHFTextField } from '../../../components/hook-form';
+
+// ----------------------------------------------------------------------
+const CREATE_CUSTOMRER = loader('../../../graphql/mutations/customer/createCustomer.graphql');
+
+const LIST_ALL_CUSTOMER = loader('../../../graphql/queries/customer/listAllCustomer.graphql');
 
 // ----------------------------------------------------------------------
 
@@ -20,17 +25,11 @@ CustomerNewEditForm.propTypes = {
   isEdit: PropTypes.bool,
   currentCustomer: PropTypes.shape({
     id: PropTypes.string,
-    name: PropTypes.string.isRequired,
-    cover: PropTypes.string.isRequired,
-    avatarUrl: PropTypes.string.isRequired,
-    phoneNumber: PropTypes.string.isRequired,
-    totalOrder: PropTypes.number.isRequired,
-    nextOrder: PropTypes.number.isRequired,
-    company: PropTypes.shape({
-      companyName: PropTypes.string.isRequired,
-      address: PropTypes.string.isRequired,
-      companyPhoneNumber: PropTypes.string.isRequired,
-    }),
+    name: PropTypes.string,
+    phoneNumber: PropTypes.string,
+    company: PropTypes.string,
+    address: PropTypes.string,
+    email: PropTypes.string,
   }),
 };
 
@@ -41,23 +40,21 @@ export default function CustomerNewEditForm({ isEdit, currentCustomer }) {
 
   const NewCustomerSchema = Yup.object().shape({
     name: Yup.string().required('Tên không được để trống'),
-    phoneNumber: Yup.string().required('Bạn hãy nhập số điện thoại'),
+    phoneNumber: Yup.string()
+      .required('Hãy nhập số điện thoại')
+      .matches(/([+84|84|0]+(3|5|7|8|9|1[2|6|8|9]))+([0-9]{8})\b/, 'Không đúng định dạng số điện thoại')
+      .max(10, 'Số điện thoại chỉ có tối đa 10 số'),
   });
 
   const defaultValues = useMemo(
     () => ({
-      name: currentCustomer?.name || '',
-      phoneNumber: currentCustomer?.phoneNumber || '',
-      avatarUrl: currentCustomer?.avatarUrl || '',
-      totalOrder: currentCustomer?.totalOrder || 0,
-      nextOrder: currentCustomer?.nextOrder || 0,
-      company: {
-        companyName: currentCustomer?.company?.companyName || '',
-        address: currentCustomer?.company?.address || '',
-        companyPhoneNumber: currentCustomer?.company?.companyPhoneNumber || '',
-      },
+      name: '',
+      phoneNumber: '',
+      address: '',
+      company: '',
+      email: '',
     }),
-    [currentCustomer]
+    []
   );
 
   const methods = useForm({
@@ -68,8 +65,6 @@ export default function CustomerNewEditForm({ isEdit, currentCustomer }) {
   const {
     reset,
     watch,
-    control,
-    setValue,
     handleSubmit,
     formState: { isSubmitting },
   } = methods;
@@ -86,104 +81,47 @@ export default function CustomerNewEditForm({ isEdit, currentCustomer }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isEdit, currentCustomer]);
 
+  const [createCustomerFn] = useMutation(CREATE_CUSTOMRER, {
+    variables: {
+      input: {},
+    },
+    refetchQueries: () => [
+      {
+        query: LIST_ALL_CUSTOMER,
+        variables: {
+          input: {},
+        },
+      },
+    ],
+  });
+
   const onSubmit = async () => {
     try {
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      await createCustomerFn({
+        variables: {
+          input: {
+            name: values?.name,
+            email: values?.email,
+            phoneNumber: values?.phoneNumber,
+            company: values?.company,
+            address: values?.address,
+          },
+        },
+      });
       reset();
-      enqueueSnackbar(!isEdit ? 'Tạo khách hàng mới thành công!' : 'Cập nhật thành công!');
+      enqueueSnackbar('Tạo khách hàng mới thành công!');
       navigate(PATH_DASHBOARD.customer.list);
     } catch (error) {
-      console.error(error);
+      enqueueSnackbar(`Thêm khách hàng không thành công: ${error.message}`, {
+        variant: 'error',
+      });
     }
   };
-
-  const handleDrop = useCallback(
-    (acceptedFiles) => {
-      const file = acceptedFiles[0];
-
-      if (file) {
-        setValue(
-          'avatarUrl',
-          Object.assign(file, {
-            preview: URL.createObjectURL(file),
-          })
-        );
-      }
-    },
-    [setValue]
-  );
 
   return (
     <FormProvider methods={methods} onSubmit={handleSubmit(onSubmit)}>
       <Grid container spacing={3}>
-        <Grid item xs={12} md={4}>
-          <Card sx={{ py: 10, px: 3 }}>
-            {isEdit && (
-              <Label
-                color={values.status !== 'active' ? 'error' : 'success'}
-                sx={{ textTransform: 'uppercase', position: 'absolute', top: 24, right: 24 }}
-              >
-                {values.status}
-              </Label>
-            )}
-
-            <Box sx={{ mb: 5 }}>
-              <RHFUploadAvatar
-                name="avatarUrl"
-                accept="image/*"
-                maxSize={31457280}
-                onDrop={handleDrop}
-                helperText={
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      mt: 2,
-                      mx: 'auto',
-                      display: 'block',
-                      textAlign: 'center',
-                      color: 'text.secondary',
-                    }}
-                  >
-                    Định dạng ảnh *.jpeg, *.jpg, *.png
-                    <br /> Dung lượng tối đa {fData(31457280)}
-                  </Typography>
-                }
-              />
-            </Box>
-
-            {isEdit && (
-              <FormControlLabel
-                labelPlacement="start"
-                control={
-                  <Controller
-                    name="status"
-                    control={control}
-                    render={({ field }) => (
-                      <Switch
-                        {...field}
-                        checked={field.value !== 'active'}
-                        onChange={(event) => field.onChange(event.target.checked ? 'banned' : 'active')}
-                      />
-                    )}
-                  />
-                }
-                label={
-                  <>
-                    <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
-                      Banned
-                    </Typography>
-                    <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                      Apply disable account
-                    </Typography>
-                  </>
-                }
-                sx={{ mx: 0, mb: 3, width: 1, justifyContent: 'space-between' }}
-              />
-            )}
-          </Card>
-        </Grid>
-
-        <Grid item xs={12} md={8}>
+        <Grid item xs={12} md={12}>
           <Card sx={{ p: 3 }}>
             <Box
               sx={{
@@ -195,9 +133,9 @@ export default function CustomerNewEditForm({ isEdit, currentCustomer }) {
             >
               <RHFTextField name="name" label="Họ tên" />
               <RHFTextField name="phoneNumber" label="Số điện thoại" />
-              <RHFTextField name="company.companyName" label="Công ty" />
-              <RHFTextField name="company.address" label="Địa chỉ công ty" />
-              <RHFTextField name="company.companyPhoneNumber" label="Số điện thoại công ty" />
+              <RHFTextField name="company" label="Công ty" />
+              <RHFTextField name="address" label="Địa chỉ KH" />
+              <RHFTextField name="email" label="Email" />
             </Box>
 
             <Stack alignItems="flex-end" sx={{ mt: 3 }}>
