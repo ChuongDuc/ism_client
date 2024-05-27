@@ -1,0 +1,17 @@
+query ProductDetail($input: ProductDetailInput!) {
+    productDetail(input: $input) {
+        id
+        name
+        code
+        price
+        weight
+        height
+        width
+        category {
+            id
+            name
+        }
+        unit
+        description
+    }
+}

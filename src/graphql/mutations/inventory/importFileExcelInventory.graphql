@@ -1,0 +1,14 @@
+mutation ImportFileExcelInventory($input: ImportFileExcelInventoryInput!) {
+    importFileExcelInventory(input: $input) {
+        id
+        productName
+        code
+        weight
+        unit
+        quantity
+        description
+        fileName
+        createdAt
+        updatedAt
+    }
+}

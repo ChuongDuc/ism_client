@@ -74,8 +74,6 @@ function NavbarVertical({ isOpenSidebar, onCloseSidebar }) {
             <CollapseButton onToggleCollapse={onToggleCollapse} collapseClick={collapseClick} />
           )}
         </Stack>
-
-        {/* <NavbarAccount isCollapse={isCollapse} /> */}
       </Stack>
 
       <NavSectionVertical navConfig={navConfig(user)} isCollapse={isCollapse} />
