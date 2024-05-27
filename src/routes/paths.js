@@ -10,6 +10,7 @@ export const SINGLE_KEY_PATH = {
   resetPassword: 'reset-password',
   app: 'app',
   userAccount: 'thong-tin-tai-khoan',
+  priceList: 'bang-gia-chung',
   product: 'san-pham',
   user: 'nguoi-dung',
   customer: 'khach-hang',
@@ -26,6 +27,7 @@ function path(root, subLink) {
 
 const ROOTS_AUTH = `/${SINGLE_KEY_PATH.auth}`;
 const ROOTS_DASHBOARD = `/${SINGLE_KEY_PATH.dashboard}`;
+const ROOT_SALE_MENU = `/${SINGLE_KEY_PATH.dashboard}/${SINGLE_KEY_PATH.sale}`;
 
 // ----------------------------------------------------------------------
 
@@ -128,6 +130,12 @@ export const PATH_DASHBOARD = {
       ROOTS_DASHBOARD,
       `/${SINGLE_KEY_PATH.blog}/bai-viet/apply-these-7-secret-techniques-to-improve-event`
     ),
+  },
+  inventory: path(ROOT_SALE_MENU, '/ton-kho'),
+  priceList: {
+    root: path(ROOT_SALE_MENU, `/${SINGLE_KEY_PATH.priceList}/bao-gia-chung`),
+    priceListProduct: (id) => path(ROOT_SALE_MENU, `/${SINGLE_KEY_PATH.priceList}/bao-gia-thep/${id}`),
+    // new: path(ROOT_SALE_MENU, `/${SINGLE_KEY_PATH.priceList}/tao-moi-danh-muc-sp`),
   },
 };
 

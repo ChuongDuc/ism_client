@@ -5,7 +5,6 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react
 import { Link as RouterLink } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
 import { PATH_DASHBOARD } from '../../routes/paths';
-import useSettings from '../../hooks/useSettings';
 import Page from '../../components/Page';
 import HeaderBreadcrumbs from '../../components/HeaderBreadcrumbs';
 import useTable from '../../hooks/useTable';
@@ -39,8 +38,6 @@ const TABLE_HEAD = [
 
 export default function CustomerList() {
   const { user } = useAuth();
-
-  const { themeStretch } = useSettings();
 
   const { enqueueSnackbar } = useSnackbar();
 
@@ -315,7 +312,7 @@ export default function CustomerList() {
 
   return (
     <Page title="Khách hàng">
-      <Container maxWidth={themeStretch ? false : 'lg'}>
+      <Container maxWidth={false}>
         <HeaderBreadcrumbs
           heading="Khách hàng"
           links={[

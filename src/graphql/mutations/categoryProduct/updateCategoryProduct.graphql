@@ -1,0 +1,3 @@
+mutation UpdateCategoryProduct($input: UpdateCategoryInput!) {
+    updateCategory(input: $input)
+}

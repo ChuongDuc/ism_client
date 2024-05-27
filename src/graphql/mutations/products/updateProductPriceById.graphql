@@ -1,0 +1,3 @@
+mutation updateProductPriceById($input: UpdateProductPriceByIdInput!) {
+    updateProductPriceById(input: $input)
+}

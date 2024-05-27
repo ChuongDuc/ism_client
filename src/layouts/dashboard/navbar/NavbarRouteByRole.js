@@ -1,29 +1,7 @@
 // noinspection DuplicatedCode
 
 import { PATH_DASHBOARD } from '../../../routes/paths';
-import SvgIconStyle from '../../../components/SvgIconStyle';
-
-export const getIcon = (name) => <SvgIconStyle src={`/icons/${name}.svg`} sx={{ width: 1, height: 1 }} />;
-
-export const ICONS = {
-  blog: getIcon('ic_blog'),
-  cart: getIcon('ic_cart'),
-  chat: getIcon('ic_chat'),
-  mail: getIcon('ic_mail'),
-  user: getIcon('ic_user'),
-  kanban: getIcon('ic_kanban'),
-  banking: getIcon('ic_banking'),
-  booking: getIcon('ic_booking'),
-  invoice: getIcon('ic_invoice'),
-  calendar: getIcon('ic_calendar'),
-  ecommerce: getIcon('ic_ecommerce'),
-  analytics: getIcon('ic_analytics'),
-  dashboard: getIcon('ic_dashboard'),
-  salary: getIcon('ic_ecommerce'),
-  customer: getIcon('ic_customer'),
-  saleAndMarketing: getIcon('ic_kanban'),
-  detail: getIcon('ic_booking'),
-};
+import { ICONS } from './constantItems';
 
 export const adminNavConfig = [
   // Chung
@@ -33,7 +11,6 @@ export const adminNavConfig = [
     items: [
       { title: 'Thông tin tổng hợp', path: PATH_DASHBOARD.general.app, icon: ICONS.dashboard },
       { title: 'Tài khoản', path: PATH_DASHBOARD.userAccount, icon: ICONS.user },
-      // { title: 'Lương theo doanh thu', path: PATH_DASHBOARD.general.salaryBySale, icon: ICONS.salary },
     ],
   },
   // MANAGEMENT
@@ -49,7 +26,6 @@ export const adminNavConfig = [
         children: [
           { title: 'Danh sách', path: PATH_DASHBOARD.user.list },
           { title: 'Tạo mới', path: PATH_DASHBOARD.user.new },
-          // { title: 'Cập nhật', path: PATH_DASHBOARD.user.demoEdit },
         ],
       },
       // Khách hàng
@@ -60,21 +36,16 @@ export const adminNavConfig = [
         children: [
           { title: 'Danh sách', path: PATH_DASHBOARD.customer.list },
           { title: 'Tạo mới', path: PATH_DASHBOARD.customer.new },
-          // { title: 'Cập nhật', path: PATH_DASHBOARD.customer.demoEdit },
         ],
       },
       // product
       {
-        title: 'Sản phẩm',
+        title: 'Bán hàng',
         path: PATH_DASHBOARD.product.root,
         icon: ICONS.cart,
         children: [
-          { title: 'Danh sách', path: PATH_DASHBOARD.product.list },
-          { title: 'Danh sách dạng lưới', path: PATH_DASHBOARD.product.shop },
-          { title: 'Chi tiết', path: PATH_DASHBOARD.product.demoView },
-          { title: 'Tạo SP mới', path: PATH_DASHBOARD.product.new },
-          { title: 'Sửa SP', path: PATH_DASHBOARD.product.demoEdit },
-          // { title: 'checkout', path: PATH_DASHBOARD.product.checkout },
+          { title: 'Tồn kho', path: PATH_DASHBOARD.inventory },
+          { title: 'Bảng giá chung', path: PATH_DASHBOARD.priceList.root, icon: ICONS.priceList },
         ],
       },
     ],

@@ -1,5 +1,5 @@
-import { Suspense, lazy } from 'react';
-import { Navigate, useRoutes, useLocation } from 'react-router-dom';
+import { lazy, Suspense } from 'react';
+import { Navigate, useLocation, useRoutes } from 'react-router-dom';
 import MainLayout from '../layouts/main';
 import DashboardLayout from '../layouts/dashboard';
 import LogoOnlyLayout from '../layouts/LogoOnlyLayout';
@@ -96,6 +96,42 @@ export default function Router() {
             { path: 'cards', element: <UserCards /> },
             { path: 'profile', element: <UserProfile /> },
             { path: ':id/chinh-sua', element: <UserUpdate /> },
+          ],
+        },
+        {
+          path: `${SINGLE_KEY_PATH.sale}/ton-kho`,
+          element: <Inventory />,
+        },
+        {
+          path: `${SINGLE_KEY_PATH.sale}/${SINGLE_KEY_PATH.priceList}`,
+          children: [
+            {
+              element: (
+                <Navigate
+                  to={`/${SINGLE_KEY_PATH.dashboard}/${SINGLE_KEY_PATH.sale}/${SINGLE_KEY_PATH.priceList}/bao-gia-chung`}
+                  replace
+                />
+              ),
+              index: true,
+            },
+            {
+              path: 'bao-gia-chung',
+              element: <GeneralPriceList />,
+            },
+            {
+              path: 'bao-gia-thep/:id',
+              element: <PriceList />,
+            },
+            // {
+            //   path: 'tao-moi-danh-muc-sp',
+            //   element: (
+            //     <RoleBasedGuard
+            //       accessibleRoles={[Role.admin, Role.director, Role.accountant, Role.sales, Role.transporterManager]}
+            //     >
+            //       <CategoryProductCreate />
+            //     </RoleBasedGuard>
+            //   ),
+            // },
           ],
         },
 
@@ -265,3 +301,10 @@ const ComingSoon = Loadable(lazy(() => import('../pages/ComingSoon')));
 const Maintenance = Loadable(lazy(() => import('../pages/Maintenance')));
 const Page500 = Loadable(lazy(() => import('../pages/Page500')));
 const NotFound = Loadable(lazy(() => import('../pages/Page404')));
+
+// INVENTORY
+const Inventory = Loadable(lazy(() => import('../pages/dashboard/Inventory')));
+
+// PRICE LIST
+const GeneralPriceList = Loadable(lazy(() => import('../pages/dashboard/GeneralPriceList')));
+const PriceList = Loadable(lazy(() => import('../sections/@dashboard/e-commerce/price-list/PriceList')));
