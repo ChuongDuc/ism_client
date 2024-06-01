@@ -1,0 +1,102 @@
+query FilterAllOrder($input: FilterAllOrderInput!) {
+  filterAllOrder(input: $input) {
+    totalRevenue
+    totalCompleted
+    totalPaid
+    totalDeliver
+    allOrderCounter
+    priceQuotationOrderCounter
+    creatNewOrderCounter
+    createExportOrderCounter
+    deliveryOrderCounter
+    successDeliveryOrderCounter
+    paymentConfirmationOrderCounter
+    paidOrderCounter
+    doneOrderCounter
+    orders {
+      edges {
+        cursor
+        node {
+          id
+          customer {
+            id
+            name
+            email
+            phoneNumber
+            company
+          }
+          sale {
+            id
+            role
+            email
+            address
+            phoneNumber
+            fullName
+            userName
+          }
+          invoiceNo
+          VAT
+          status
+          freightPrice
+          deliverAddress
+          itemGroupList {
+            id
+            description
+            createdAt
+            updatedAt
+            orderDetailList {
+              id
+              quantity
+              priceProduct
+              weightProduct
+              description
+              product {
+                id
+                description
+                name
+                updatedAt
+                createdAt
+                width
+                weight
+                price
+                code
+                unit
+              }
+            }
+          }
+          paymentList {
+            id
+            money
+            description
+            updatedAt
+          }
+          deliverOrderList {
+            id
+            customer {
+              id
+              name
+            }
+            deliveryDate
+            cranesNote
+            receivingNote
+            receivingNote
+            deliveryDate
+            driver {
+              id
+              fullName
+            }
+          }
+          totalMoney
+          remainingPaymentMoney
+          createdAt
+          updatedAt
+        }
+      }
+      totalCount
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
+    }
+  }
+}

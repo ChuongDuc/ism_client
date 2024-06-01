@@ -16,6 +16,10 @@ export function fDateTime(date) {
   return format(new Date(date), 'dd MMM yyyy HH:mm');
 }
 
+export function fDateTimeVer2(date) {
+  return format(new Date(date), 'dd/MM/yyyy HH:mm');
+}
+
 export function fTimestamp(date) {
   return getTime(new Date(date));
 }

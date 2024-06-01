@@ -1,3 +1,5 @@
+import { endOfDay, startOfDay, subDays } from 'date-fns';
+
 export const OrderStatusArr = [
   'Tạo mới',
   'Báo giá - Chăm sóc KH',
@@ -39,4 +41,24 @@ export const encodeFileNameToUtf8 = (fileName) => {
     return Buffer.from(fileName, 'latin1').toString('utf8');
   }
   return 'File';
+};
+
+export const getDateRange = () => {
+  // Get current date
+  const currentDate = new Date();
+
+  // Calculate start date (00:00 of 30 days before)
+  const startDate = startOfDay(subDays(currentDate, 30));
+
+  // Calculate end date (23:59 of current date)
+  const endDate = endOfDay(currentDate);
+
+  // Format dates for better readability (optional)
+  // const formattedStartDate = format(startDate, 'yyyy-MM-dd HH:mm:ss');
+  // const formattedEndDate = format(endDate, 'yyyy-MM-dd HH:mm:ss');
+
+  return {
+    startDate,
+    endDate,
+  };
 };
