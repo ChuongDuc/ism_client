@@ -1,68 +1,44 @@
 // noinspection JSValidateTypes,DuplicatedCode
 
-import sumBy from 'lodash/sumBy';
-import { useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { useTheme } from '@mui/material/styles';
-import {
-  Box,
-  Button,
-  Card,
-  Container,
-  Divider,
-  FormControlLabel,
-  IconButton,
-  Stack,
-  Switch,
-  Tab,
-  Table,
-  TableBody,
-  TableContainer,
-  TablePagination,
-  Tabs,
-  Tooltip,
-} from '@mui/material';
+import { Button, Card, Container, Divider, Stack, Tab, Table, TableBody, TableContainer, Tabs } from '@mui/material';
+import { loader } from 'graphql.macro';
+import { useSnackbar } from 'notistack';
+import { useMutation, useQuery } from '@apollo/client';
 import { PATH_DASHBOARD } from '../../routes/paths';
 import useTabs from '../../hooks/useTabs';
-import useSettings from '../../hooks/useSettings';
-import useTable, { emptyRows, getComparator } from '../../hooks/useTable';
-import { _orders } from '../../_mock';
+import useTable from '../../hooks/useTable';
 import Page from '../../components/Page';
-import Label from '../../components/Label';
 import Iconify from '../../components/Iconify';
 import Scrollbar from '../../components/Scrollbar';
 import HeaderBreadcrumbs from '../../components/HeaderBreadcrumbs';
-import { TableEmptyRows, TableHeadCustom, TableNoData, TableSelectedActions } from '../../components/table';
 import InvoiceAnalytic from '../../sections/@dashboard/order/InvoiceAnalytic';
-import { OrderTableToolbar, OrderTableRow } from '../../sections/@dashboard/order/list';
-import { AllLabel, OrderStatus, Role } from '../../constant';
+import { AllLabel, DefaultMaxHeight, DefaultRowsPerPage, getDateRange, OrderStatus, Role } from '../../constant';
 import useAuth from '../../hooks/useAuth';
+import { reformatStatus } from '../../utils/getOrderFormat';
+import Label from '../../components/Label';
+import { OrderTableRow, OrderTableToolbar } from '../../sections/@dashboard/order/list';
+import TableHeadWithoutCheckBoxCustom from '../../components/table/TableHeadWithoutCheckBoxCustom';
+import { TableEmptyRows, TableNoData } from '../../components/table';
+import CommonBackdrop from '../../components/CommonBackdrop';
 
 // ----------------------------------------------------------------------
-const filterOrder = (user, orders) => {
-  if (
-    user.role === Role.admin ||
-    user.role === Role.manager ||
-    user.role === Role.director ||
-    user.role === Role.accountant
-  ) {
-    return orders;
-  }
-  if (user.role === Role.sales) {
-    return orders.filter((ord) => ord.sale.id === user.id);
-  }
-  if (user.role === Role.driver) {
-    return orders.filter((ord) => ord.driver && ord.driver?.id === user.id);
-  }
-  return [];
-};
 
+const FILTER_ALL_ORDER = loader('../../graphql/queries/order/filterAllOrder.graphql');
+const DELETE_ORDER = loader('../../graphql/mutations/order/deleteOrder.graphql');
+const GET_ALL_SALES = loader('../../graphql/queries/user/getAllUsers.graphql');
+
+// ----------------------------------------------------------------------
 const TABLE_HEAD = [
-  { id: 'invoiceNumber', label: 'Khách hàng', align: 'left' },
-  { id: 'createDate', label: 'Tạo ngày', align: 'left' },
-  { id: 'dueDate', label: 'Ngày giao hàng', align: 'left' },
-  { id: 'price', label: 'Tổng đơn hàng', align: 'left', width: 150 },
-  { id: 'status', label: 'Trạng thái', align: 'left', width: 160 },
+  { id: 'idx', label: 'STT', align: 'left', width: 50 },
+  { id: 'customer', label: 'Khách hàng', align: 'left' },
+  { id: 'company', label: 'Công ty', align: 'left' },
+  { id: 'freightPrice', label: 'Cước vận chuyển', align: 'left', minWidth: 160 },
+  { id: 'price', label: 'Tổng đơn', align: 'left', minWidth: 160 },
+  { id: 'status', label: 'Trạng thái', align: 'left', minWidth: 180 },
+  { id: 'createDate', label: 'Ngày tạo', align: 'left' },
   { id: '', align: 'right' },
 ];
 
@@ -73,136 +49,352 @@ export default function OrderList() {
 
   const theme = useTheme();
 
-  const { themeStretch } = useSettings();
-
   const navigate = useNavigate();
 
-  const {
-    dense,
-    page,
-    order,
-    orderBy,
-    rowsPerPage,
-    setPage,
-    //
-    selected,
-    setSelected,
-    onSelectRow,
-    onSelectAllRows,
-    //
-    onSort,
-    onChangeDense,
-    onChangePage,
-    onChangeRowsPerPage,
-  } = useTable({ defaultOrderBy: 'createDate', defaultRowsPerPage: 10 });
+  const { enqueueSnackbar } = useSnackbar();
 
-  const [tableData, setTableData] = useState(filterOrder(user, _orders));
+  const { page, order, orderBy, rowsPerPage, setPage, selected, setSelected, onSelectRow, onSelectAllRows, onSort } =
+    useTable({ defaultRowsPerPage: DefaultRowsPerPage });
+
+  const [tableData, setTableData] = useState([]);
 
   const [filterName, setFilterName] = useState('');
 
-  const [filterStartDate, setFilterStartDate] = useState(null);
+  const { startDate, endDate } = getDateRange();
 
-  const [filterEndDate, setFilterEndDate] = useState(null);
+  const [filterStartDate, setFilterStartDate] = useState(startDate);
+
+  const [filterEndDate, setFilterEndDate] = useState(endDate);
+
+  const [pageInfo, setPageInfo] = useState({
+    hasNextPage: false,
+    endCursor: 0,
+  });
+
+  const [countOrder, setCountOrder] = useState({
+    allOrderCounter: 0,
+    priceQuotationOrderCounter: 0,
+    creatNewOrderCounter: 0,
+    createExportOrderCounter: 0,
+    deliveryOrderCounter: 0,
+    successDeliveryOrderCounter: 0,
+    paymentConfirmationOrderCounter: 0,
+    paidOrderCounter: 0,
+    doneOrderCounter: 0,
+  });
+
+  const [totalRevenue, setTotalRevenue] = useState(0);
+
+  const [totalCompleted, setTotalCompleted] = useState(0);
+
+  const [totalPaid, setTotalPaid] = useState(0);
+
+  const [totalDeliver, setTotalDeliver] = useState(0);
+
+  const [listSales, setListSales] = useState([]);
+
+  const [selectedSaleId, setSelectedSaleId] = useState(null);
+
+  const [filterSales, setFilterSales] = useState('Tất cả');
 
   const { currentTab: filterStatus, onChangeTab: onFilterStatus } = useTabs('Tất cả');
+
+  const { data: getAllSales } = useQuery(GET_ALL_SALES, {
+    variables: {
+      input: {
+        role: Role.sales,
+      },
+    },
+  });
+
+  const {
+    data: getOrder,
+    fetchMore: fetchMoreOrder,
+    loading: loadingOrder,
+  } = useQuery(FILTER_ALL_ORDER, {
+    variables: {
+      input: {
+        queryString: filterName,
+        saleId: user.role === Role.sales ? Number(user.id) : selectedSaleId,
+        status: filterStatus === 'Tất cả' ? null : reformatStatus(filterStatus),
+        createAt:
+          filterStartDate && filterEndDate
+            ? {
+                startAt: filterStartDate,
+                endAt: filterEndDate,
+              }
+            : null,
+        args: {
+          first: rowsPerPage,
+          after: 0,
+        },
+      },
+    },
+  });
+
+  const updateQuery = (previousResult, { fetchMoreResult }) => {
+    if (!fetchMoreResult) return previousResult;
+    const updatedEdges = [
+      ...previousResult.filterAllOrder.orders.edges,
+      ...fetchMoreResult.filterAllOrder.orders.edges,
+    ];
+    return {
+      ...previousResult,
+      filterAllOrder: {
+        ...previousResult.filterAllOrder,
+        orders: {
+          ...previousResult.filterAllOrder.orders,
+          edges: updatedEdges,
+          pageInfo: fetchMoreResult.filterAllOrder.orders.pageInfo,
+          totalCount: fetchMoreResult.filterAllOrder.orders.totalCount,
+        },
+        totalCompleted: fetchMoreResult.filterAllOrder.totalCompleted,
+        totalDeliver: fetchMoreResult.filterAllOrder.totalDeliver,
+        totalPaid: fetchMoreResult.filterAllOrder.totalPaid,
+        totalRevenue: fetchMoreResult.filterAllOrder.totalRevenue,
+        allOrderCounter: fetchMoreResult.filterAllOrder.allOrderCounter,
+        priceQuotationOrderCounter: fetchMoreResult.filterAllOrder.priceQuotationOrderCounter,
+        creatNewOrderCounter: fetchMoreResult.filterAllOrder.creatNewOrderCounter,
+        createExportOrderCounter: fetchMoreResult.filterAllOrder.createExportOrderCounter,
+        deliveryOrderCounter: fetchMoreResult.filterAllOrder.deliveryOrderCounter,
+        successDeliveryOrderCounter: fetchMoreResult.filterAllOrder.successDeliveryOrderCounter,
+        paymentConfirmationOrderCounter: fetchMoreResult.filterAllOrder.paymentConfirmationOrderCounter,
+        paidOrderCounter: fetchMoreResult.filterAllOrder.paidOrderCounter,
+        doneOrderCounter: fetchMoreResult.filterAllOrder.doneOrderCounter,
+      },
+    };
+  };
+
+  useEffect(() => {
+    if (getOrder) {
+      setTableData(getOrder.filterAllOrder.orders.edges.map((edge) => edge.node));
+      setPageInfo((prevState) => ({
+        ...prevState,
+        hasNextPage: getOrder.filterAllOrder.orders.pageInfo.hasNextPage,
+        endCursor: parseInt(getOrder.filterAllOrder.orders.pageInfo.endCursor, 10),
+      }));
+      setTotalRevenue(getOrder.filterAllOrder.totalRevenue);
+      setTotalCompleted(getOrder.filterAllOrder.totalCompleted);
+      setTotalPaid(getOrder.filterAllOrder.totalPaid);
+      setTotalDeliver(getOrder.filterAllOrder.totalDeliver);
+      setCountOrder((prevState) => ({
+        ...prevState,
+        allOrderCounter: parseInt(getOrder.filterAllOrder.allOrderCounter, 10),
+        priceQuotationOrderCounter: parseInt(getOrder.filterAllOrder.priceQuotationOrderCounter, 10),
+        creatNewOrderCounter: parseInt(getOrder.filterAllOrder.creatNewOrderCounter, 10),
+        createExportOrderCounter: parseInt(getOrder.filterAllOrder.createExportOrderCounter, 10),
+        deliveryOrderCounter: parseInt(getOrder.filterAllOrder.deliveryOrderCounter, 10),
+        successDeliveryOrderCounter: parseInt(getOrder.filterAllOrder.successDeliveryOrderCounter, 10),
+        paymentConfirmationOrderCounter: parseInt(getOrder.filterAllOrder.paymentConfirmationOrderCounter, 10),
+        paidOrderCounter: parseInt(getOrder.filterAllOrder.paidOrderCounter, 10),
+        doneOrderCounter: parseInt(getOrder.filterAllOrder.doneOrderCounter, 10),
+      }));
+    }
+  }, [getOrder, user]);
 
   const handleFilterName = (filterName) => {
     setFilterName(filterName);
     setPage(0);
   };
 
-  const handleDeleteRow = (id) => {
-    const deleteRow = tableData.filter((row) => row.id !== id);
-    setSelected([]);
-    setTableData(deleteRow);
-  };
+  const [deleteOrder, { loading: loadingDelete }] = useMutation(DELETE_ORDER, {
+    onCompleted: () => {
+      enqueueSnackbar('Xóa đơn hàng thành công', {
+        variant: 'success',
+      });
+    },
+    refetchQueries: () => [
+      {
+        query: FILTER_ALL_ORDER,
+        variables: {
+          input: {
+            queryString: filterName,
+            saleId: user.role === Role.sales ? Number(user.id) : selectedSaleId,
+            status: filterStatus === 'Tất cả' ? null : reformatStatus(filterStatus),
+            createAt:
+              filterStartDate && filterEndDate
+                ? {
+                    startAt: filterStartDate,
+                    endAt: filterEndDate,
+                  }
+                : null,
+            args: {
+              first: rowsPerPage,
+              after: 0,
+            },
+          },
+        },
+      },
+    ],
+    onError: (error) => {
+      enqueueSnackbar(`Xóa đơn hàng không thành công. Nguyên nhân: ${error.message}`, {
+        variant: 'error',
+      });
+    },
+  });
 
-  const handleDeleteRows = (selected) => {
-    const deleteRows = tableData.filter((row) => !selected.includes(row.id));
+  const handleDeleteRow = async (id) => {
+    await deleteOrder({
+      variables: {
+        input: {
+          orderId: Number(id),
+        },
+      },
+    });
     setSelected([]);
-    setTableData(deleteRows);
-  };
-
-  const handleEditRow = (id) => {
-    navigate(PATH_DASHBOARD.saleAndMarketing.edit(id));
   };
 
   const handleViewRow = (id) => {
     navigate(PATH_DASHBOARD.saleAndMarketing.view(id));
   };
 
-  const dataFiltered = applySortFilter({
-    tableData,
-    comparator: getComparator(order, orderBy),
-    filterName,
-    filterStatus,
-    filterStartDate,
-    filterEndDate,
-  });
-
-  const denseHeight = dense ? 56 : 76;
-
   const isNotFound =
-    (!dataFiltered.length && !!filterName) ||
-    (!dataFiltered.length && !!filterStatus) ||
-    (!dataFiltered.length && !!filterEndDate) ||
-    (!dataFiltered.length && !!filterStartDate);
+    (!tableData.length && !!filterName) ||
+    (!tableData.length && !!filterStatus) ||
+    (!tableData.length && !!filterEndDate) ||
+    (!tableData.length && !!filterStartDate);
 
-  const getLengthByStatus = (status) => tableData.filter((item) => item.status === status).length;
-
-  const getTotalPriceByStatus = (status) =>
-    sumBy(
-      tableData.filter((item) => item.status === status),
-      'totalPrice'
-    );
-
-  const getPercentByStatus = (status) => (getLengthByStatus(status) / tableData.length) * 100;
+  const getPercentByStatus = (statusCount) => (statusCount / countOrder.allOrderCounter) * 100;
 
   const TABS = [
-    { value: AllLabel, label: AllLabel, color: 'info', count: tableData.length },
-    { value: OrderStatus.new, label: 'Mới', color: 'success', count: getLengthByStatus(OrderStatus.new) },
+    {
+      value: AllLabel,
+      label: AllLabel,
+      color: 'info',
+      count: countOrder.allOrderCounter,
+    },
+    {
+      value: OrderStatus.new,
+      label: 'Mới',
+      color: 'success',
+      count: countOrder.creatNewOrderCounter,
+    },
     {
       value: OrderStatus.quotationAndDeal,
       label: 'Đang báo giá',
       color: 'info',
-      count: getLengthByStatus(OrderStatus.quotationAndDeal),
+      count: countOrder.priceQuotationOrderCounter,
     },
     {
       value: OrderStatus.newDeliverExport,
       label: 'Đã chốt đơn',
       color: 'success',
-      count: getLengthByStatus(OrderStatus.newDeliverExport),
+      count: countOrder.createExportOrderCounter,
     },
     {
       value: OrderStatus.inProgress,
       label: 'Đang giao hàng',
       color: 'warning',
-      count: getLengthByStatus(OrderStatus.inProgress),
+      count: countOrder.deliveryOrderCounter,
     },
     {
       value: OrderStatus.deliverSuccess,
       label: 'Giao hàng thành công',
       color: 'default',
-      count: getLengthByStatus(OrderStatus.deliverSuccess),
+      count: countOrder.successDeliveryOrderCounter,
     },
-    { value: OrderStatus.paid, label: 'Đã thanh toán', color: 'success', count: getLengthByStatus(OrderStatus.paid) },
+    {
+      value: OrderStatus.paid,
+      label: 'Đang thanh toán',
+      color: 'success',
+      count: countOrder.paidOrderCounter,
+    },
     {
       value: OrderStatus.confirmByAccProcessing,
       label: 'Kế toán đang xác nhận',
       color: 'warning',
-      count: getLengthByStatus(OrderStatus.confirmByAccProcessing),
+      count: countOrder.paymentConfirmationOrderCounter,
     },
     {
       value: OrderStatus.completed,
       label: 'Hoàn thành',
       color: 'success',
-      count: getLengthByStatus(OrderStatus.completed),
+      count: countOrder.doneOrderCounter,
     },
   ];
 
+  const tableEl = useRef();
+  const [loading, setLoading] = useState(false);
+  const [distanceBottom, setDistanceBottom] = useState(0);
+
+  const scrollListener = useCallback(() => {
+    const bottom = tableEl.current?.scrollHeight - tableEl.current?.clientHeight;
+    // if you want to change distanceBottom every time new data is loaded
+    // don't use the if statement
+    if (!distanceBottom) {
+      // calculate distanceBottom that works for you
+      setDistanceBottom(Math.round(bottom * 0.2));
+    }
+
+    if (tableEl.current?.scrollTop > bottom - distanceBottom && pageInfo.hasNextPage && !loading) {
+      setLoading(true);
+      fetchMoreOrder({
+        variables: {
+          input: {
+            queryString: filterName,
+            saleId: user.role === Role.sales ? Number(user.id) : selectedSaleId,
+            status: filterStatus === 'Tất cả' ? null : reformatStatus(filterStatus),
+            createAt:
+              filterStartDate && filterEndDate
+                ? {
+                    startAt: filterStartDate,
+                    endAt: filterEndDate,
+                  }
+                : null,
+            args: {
+              first: rowsPerPage,
+              after: (page + 1) * rowsPerPage,
+            },
+          },
+        },
+        updateQuery: (previousResult, { fetchMoreResult }) => updateQuery(previousResult, { fetchMoreResult }),
+      }).then(() => {
+        setLoading(false);
+        setPage(page + 1);
+      });
+    }
+  }, [
+    distanceBottom,
+    pageInfo.hasNextPage,
+    loading,
+    fetchMoreOrder,
+    filterName,
+    user.role,
+    user.id,
+    selectedSaleId,
+    filterStatus,
+    filterStartDate,
+    filterEndDate,
+    rowsPerPage,
+    page,
+    setPage,
+  ]);
+
+  useLayoutEffect(() => {
+    const tableRef = tableEl.current;
+    tableRef?.addEventListener('scroll', scrollListener);
+    return () => {
+      tableRef?.removeEventListener('scroll', scrollListener);
+    };
+  }, [scrollListener]);
+
+  useEffect(() => {
+    if (getAllSales) {
+      setListSales(getAllSales?.users?.edges.map((user) => user.node));
+    }
+  }, [getAllSales]);
+
+  const handleGetSaleId = (event) => {
+    setSelectedSaleId(event);
+  };
+
+  const handleFilterSale = (event) => {
+    setFilterSales(event.target.value);
+  };
+
   return (
     <Page title="Danh sách đơn hàng">
-      <Container maxWidth={themeStretch ? false : 'lg'}>
+      <Container maxWidth={false}>
         <HeaderBreadcrumbs
           heading="Danh sách đơn hàng"
           links={[
@@ -211,14 +403,18 @@ export default function OrderList() {
             { name: 'Danh sách' },
           ]}
           action={
-            <Button
-              variant="contained"
-              component={RouterLink}
-              to={PATH_DASHBOARD.saleAndMarketing.new}
-              startIcon={<Iconify icon={'eva:plus-fill'} />}
-            >
-              Đơn hàng mới
-            </Button>
+            <>
+              {user.role === Role.sales && (
+                <Button
+                  variant="contained"
+                  component={RouterLink}
+                  to={PATH_DASHBOARD.saleAndMarketing.new}
+                  startIcon={<Iconify icon={'eva:plus-fill'} />}
+                >
+                  Đơn hàng mới
+                </Button>
+              )}
+            </>
           }
         />
 
@@ -231,35 +427,35 @@ export default function OrderList() {
             >
               <InvoiceAnalytic
                 title="Tổng"
-                total={tableData.length}
+                total={countOrder.allOrderCounter}
                 percent={100}
-                price={sumBy(tableData, 'totalPrice')}
+                price={totalRevenue}
                 icon="ic:round-receipt"
                 color={theme.palette.info.main}
               />
               <InvoiceAnalytic
                 title="Đã hoàn thành"
-                total={getLengthByStatus(OrderStatus.completed)}
-                percent={getPercentByStatus(OrderStatus.completed)}
-                price={getTotalPriceByStatus(OrderStatus.completed)}
+                total={countOrder.doneOrderCounter}
+                percent={getPercentByStatus(countOrder.doneOrderCounter)}
+                price={totalCompleted}
                 icon="ion:checkmark-done-circle-sharp"
-                color={theme.palette.success.main}
+                color={theme.palette.success.dark}
               />
               <InvoiceAnalytic
-                title="Đã thanh toán"
-                total={getLengthByStatus(OrderStatus.paid)}
-                percent={getPercentByStatus(OrderStatus.paid)}
-                price={getTotalPriceByStatus(OrderStatus.paid)}
+                title="Đang thanh toán"
+                total={countOrder.paidOrderCounter}
+                percent={getPercentByStatus(countOrder.paidOrderCounter)}
+                price={totalPaid}
                 icon="flat-color-icons:paid"
-                color={theme.palette.success.main}
+                color={theme.palette.success.dark}
               />
               <InvoiceAnalytic
                 title="Đang giao hàng"
-                total={getLengthByStatus(OrderStatus.inProgress)}
-                percent={getPercentByStatus(OrderStatus.inProgress)}
-                price={getTotalPriceByStatus(OrderStatus.inProgress)}
+                total={countOrder.deliveryOrderCounter}
+                percent={getPercentByStatus(countOrder.deliveryOrderCounter)}
+                price={totalDeliver}
                 icon="carbon:in-progress-warning"
-                color={theme.palette.warning.main}
+                color={theme.palette.warning.dark}
               />
             </Stack>
           </Scrollbar>
@@ -272,7 +468,7 @@ export default function OrderList() {
             scrollButtons="auto"
             value={filterStatus}
             onChange={onFilterStatus}
-            sx={{ px: 0, bgcolor: 'background.neutral' }}
+            sx={{ px: 3, bgcolor: 'background.neutral' }}
           >
             {TABS.map((tab, idx) => (
               <Tab
@@ -297,51 +493,25 @@ export default function OrderList() {
             onFilterName={handleFilterName}
             onFilterStartDate={(newValue) => {
               setFilterStartDate(newValue);
+              setPage(0);
             }}
             onFilterEndDate={(newValue) => {
               setFilterEndDate(newValue);
+              setPage(0);
             }}
+            filterSales={filterSales}
+            sales={listSales}
+            handleGetSaleId={handleGetSaleId}
+            onFilterSales={handleFilterSale}
           />
 
           <Scrollbar>
-            <TableContainer sx={{ minWidth: 800, position: 'relative' }}>
-              {selected.length > 0 && (
-                <TableSelectedActions
-                  dense={dense}
-                  numSelected={selected.length}
-                  rowCount={tableData.length}
-                  onSelectAllRows={(checked) =>
-                    onSelectAllRows(
-                      checked,
-                      tableData.map((row) => row.id)
-                    )
-                  }
-                  actions={
-                    <Stack spacing={1} direction="row">
-                      <Tooltip title="Tải về máy">
-                        <IconButton color="primary">
-                          <Iconify icon={'eva:download-outline'} />
-                        </IconButton>
-                      </Tooltip>
-
-                      <Tooltip title="In">
-                        <IconButton color="primary">
-                          <Iconify icon={'eva:printer-fill'} />
-                        </IconButton>
-                      </Tooltip>
-
-                      <Tooltip title="Xóa">
-                        <IconButton color="primary" onClick={() => handleDeleteRows(selected)}>
-                          <Iconify icon={'eva:trash-2-outline'} />
-                        </IconButton>
-                      </Tooltip>
-                    </Stack>
-                  }
-                />
-              )}
-
-              <Table size={dense ? 'small' : 'medium'}>
-                <TableHeadCustom
+            <TableContainer
+              sx={{ minWidth: 800, position: 'relative', maxHeight: DefaultMaxHeight, minHeight: DefaultMaxHeight }}
+              ref={tableEl}
+            >
+              <Table size={'small'} stickyHeader>
+                <TableHeadWithoutCheckBoxCustom
                   order={order}
                   orderBy={orderBy}
                   headLabel={TABLE_HEAD}
@@ -351,53 +521,31 @@ export default function OrderList() {
                   onSelectAllRows={(checked) =>
                     onSelectAllRows(
                       checked,
-                      tableData.map((row) => row.id)
+                      tableData.map((row) => row.orderId)
                     )
                   }
                 />
 
                 <TableBody>
-                  {dataFiltered.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => (
+                  {tableData.map((row, idx) => (
                     <OrderTableRow
-                      key={row.id}
+                      key={idx}
                       row={row}
-                      selected={selected.includes(row.id)}
-                      onSelectRow={() => onSelectRow(row.id)}
-                      onViewRow={() => handleViewRow(row.id)}
-                      onEditRow={() => handleEditRow(row.id)}
-                      onDeleteRow={() => handleDeleteRow(row.id)}
+                      idx={idx}
+                      selected={selected.includes(row.orderId)}
+                      onSelectRow={() => onSelectRow(row.orderId)}
+                      onViewRow={() => handleViewRow(row.orderId)}
+                      onDeleteRow={() => handleDeleteRow(row.orderId)}
                     />
                   ))}
-
-                  <TableEmptyRows height={denseHeight} emptyRows={emptyRows(page, rowsPerPage, tableData.length)} />
+                  <TableEmptyRows height={56} emptyRows={tableEmptyRows(page, rowsPerPage, tableData.length)} />
 
                   <TableNoData isNotFound={isNotFound} />
                 </TableBody>
               </Table>
             </TableContainer>
           </Scrollbar>
-
-          <Box sx={{ position: 'relative' }}>
-            <TablePagination
-              rowsPerPageOptions={[5, 10, 25]}
-              component="div"
-              count={dataFiltered.length}
-              rowsPerPage={rowsPerPage}
-              page={page}
-              onPageChange={onChangePage}
-              onRowsPerPageChange={onChangeRowsPerPage}
-              labelRowsPerPage="Số lượng trên trang"
-              labelDisplayedRows={(from = page) =>
-                `${from.from}-${from.to === -1 ? from.count : from.to}/${from.count}`
-              }
-            />
-
-            <FormControlLabel
-              control={<Switch checked={dense} onChange={onChangeDense} />}
-              label="Thu gọn bảng"
-              sx={{ px: 3, py: 1.5, top: 0, position: { md: 'absolute' } }}
-            />
-          </Box>
+          <CommonBackdrop loading={loadingOrder || loading || loadingDelete} />
         </Card>
       </Container>
     </Page>
@@ -406,35 +554,6 @@ export default function OrderList() {
 
 // ----------------------------------------------------------------------
 
-function applySortFilter({ tableData, comparator, filterName, filterStatus, filterStartDate, filterEndDate }) {
-  const stabilizedThis = tableData.map((el, index) => [el, index]);
-
-  stabilizedThis.sort((a, b) => {
-    const order = comparator(a[0], b[0]);
-    if (order !== 0) return order;
-    return a[1] - b[1];
-  });
-
-  tableData = stabilizedThis.map((el) => el[0]);
-
-  if (filterName) {
-    tableData = tableData.filter(
-      (item) =>
-        item.invoiceNumber.toLowerCase().indexOf(filterName.toLowerCase()) !== -1 ||
-        item.customer.name.toLowerCase().indexOf(filterName.toLowerCase()) !== -1
-    );
-  }
-
-  if (filterStatus !== AllLabel) {
-    tableData = tableData.filter((item) => item.status === filterStatus);
-  }
-
-  if (filterStartDate && filterEndDate) {
-    tableData = tableData.filter(
-      (item) =>
-        item.createDate.getTime() >= filterStartDate.getTime() && item.createDate.getTime() <= filterEndDate.getTime()
-    );
-  }
-
-  return tableData;
+function tableEmptyRows(page, rowsPerPage, arrayLength) {
+  return page > 0 ? Math.max(0, rowsPerPage - arrayLength) : 0;
 }

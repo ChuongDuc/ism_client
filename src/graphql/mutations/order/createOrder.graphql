@@ -1,0 +1,76 @@
+mutation CreateOrder($input: CreateOrderInput!) {
+  createOrder(input: $input) {
+    id
+    customer {
+      id
+      name
+      email
+      phoneNumber
+      company
+    }
+    sale {
+      id
+      role
+      email
+      address
+      phoneNumber
+      fullName
+      userName
+    }
+    invoiceNo
+    VAT
+    status
+#    driver {
+#      id
+#      role
+#      email
+#      address
+#      phoneNumber
+#      fullName
+#      userName
+#    }
+    freightPrice
+    deliverAddress
+    itemGroupList {
+      id
+      description
+      createdAt
+      updatedAt
+      orderDetailList {
+        id
+        quantity
+        priceProduct
+        totalWeight
+        description
+        product {
+          id
+          description
+          name
+          updatedAt
+          createdAt
+          width
+          weight
+          price
+          code
+          unit
+        }
+      }
+    }
+    paymentList {
+      id
+      money
+      description
+      updatedAt
+    }
+    deliverOrderList {
+      id
+      deliveryDate
+      cranesNote
+      receivingNote
+    }
+    totalMoney
+    remainingPaymentMoney
+    createdAt
+    updatedAt
+  }
+}

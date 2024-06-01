@@ -1,0 +1,83 @@
+query GetOrderById($orderId: Int!) {
+  getOrderById(id: $orderId) {
+    id
+    customer {
+      id
+      name
+      email
+      phoneNumber
+      company
+    }
+    sale {
+      id
+      role
+      email
+      address
+      phoneNumber
+      fullName
+      userName
+    }
+    invoiceNo
+    VAT
+    status
+#    driver {
+#      id
+#      role
+#      email
+#      address
+#      phoneNumber
+#      fullName
+#      userName
+#    }
+    freightPrice
+    deliverAddress
+    itemGroupList {
+      id
+      description
+      createdAt
+      updatedAt
+      orderDetailList {
+        id
+        quantity
+        priceProduct
+        weightProduct
+        description
+        totalWeight
+        product {
+          id
+          description
+          name
+          updatedAt
+          createdAt
+          width
+          weight
+          price
+          code
+          unit
+        }
+      }
+    }
+    paymentList {
+      id
+      money
+      description
+      updatedAt
+    }
+    deliverOrderList {
+      id
+      description
+      deliveryDate
+      cranesNote
+      receivingNote
+      driver {
+        id
+        fullName
+        phoneNumber
+      }
+    }
+    totalMoney
+    remainingPaymentMoney
+    createdAt
+    updatedAt
+  }
+}
