@@ -1,0 +1,3 @@
+mutation DeletePaymentInfor($input: DeletePaymentInforInput!) {
+    deletePaymentInfor(input: $input)
+}

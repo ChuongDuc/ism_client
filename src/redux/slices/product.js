@@ -1,6 +1,4 @@
 import { createSlice } from '@reduxjs/toolkit';
-import sum from 'lodash/sum';
-import uniqBy from 'lodash/uniqBy';
 // utils
 import axios from '../../utils/axios';
 //
@@ -12,25 +10,8 @@ const initialState = {
   isLoading: false,
   error: null,
   products: [],
-  product: null,
-  sortBy: null,
-  filters: {
-    gender: [],
-    category: 'All',
-    colors: [],
-    priceRange: '',
-    rating: '',
-    quote: [],
-  },
-  checkout: {
-    activeStep: 0,
-    cart: [],
-    subtotal: 0,
-    total: 0,
-    discount: 0,
-    shipping: 0,
-    billing: null,
-  },
+  categories: [],
+  isMultiCategory: false,
 };
 
 const slice = createSlice({
@@ -54,137 +35,168 @@ const slice = createSlice({
       state.products = action.payload;
     },
 
+    // GET CATEGORIES
+    getCategoriesSuccess(state, action) {
+      state.isLoading = false;
+      state.categories = action.payload;
+    },
+
+    addIsMultiCate(state, action) {
+      const val = action.payload;
+      state.isMultiCategory = val;
+    },
+
+    addProducts(state, action) {
+      const products = action.payload;
+
+      const reducePrs = products.map((pr) => ({
+        id: pr.id,
+        name: pr.name,
+        price: pr.price,
+        quantity: 1,
+        total: 0,
+        weight: Number(pr.weight).toFixed(2),
+        priceProduct: pr.price,
+        description: pr.description,
+        unit: pr.unit,
+        weightProduct: Number(pr.weight).toFixed(2),
+      }));
+      reducePrs.forEach((pr) => {
+        const isExisted = state.products.map((p) => p.product.id).includes(pr.id);
+        if (isExisted) {
+          state.products?.map((el, index) => {
+            if (el.product.id === pr.id) {
+              state.products[index].quantity += 1;
+            }
+            return state.products;
+          });
+        } else {
+          state.products.push({
+            product: {
+              id: pr.id,
+              name: pr.name,
+              price: pr.price,
+              weight: pr.weight,
+              unit: pr.unit,
+            },
+            quantity: 1,
+            total: 0,
+            priceProduct: pr.price,
+            description: pr.description,
+            weightProduct: pr.weightProduct,
+          });
+        }
+      });
+    },
+
+    addInitCategories(state, action) {
+      const idx = action.payload;
+      const category = {
+        categoryId: idx,
+        name: '',
+        orderDetailList: [],
+      };
+      state.categories.push(category);
+    },
+
+    updateCategoryName(state, action) {
+      const { idx, categoryName } = action.payload;
+
+      state.categories[idx].name = categoryName;
+    },
+
+    addCategories(state, action) {
+      const { products, idxCate } = action.payload;
+
+      const reducePrs = products.map((pr) => ({
+        id: pr.id,
+        name: pr.name,
+        price: pr.price,
+        quantity: 1,
+        total: 0,
+        weight: Number(pr.weight).toFixed(2),
+        priceProduct: pr.price,
+        weightProduct: Number(pr.weight).toFixed(2),
+        description: pr.description,
+        unit: pr.unit,
+      }));
+      reducePrs.forEach((pr) => {
+        const isExisted =
+          state?.categories[idxCate]?.orderDetailList?.length > 0
+            ? state?.categories[idxCate]?.orderDetailList?.map((p) => p?.product?.id).includes(pr?.id)
+            : state?.categories?.map((p) => p?.orderDetailList?.map((order) => order?.product?.id)).includes(pr.id);
+        if (isExisted) {
+          state?.categories[idxCate]?.orderDetailList?.map((el, index) => {
+            if (el?.product?.id === pr.id) {
+              state.categories[idxCate].orderDetailList[index].quantity += 1;
+            }
+            return state.categories;
+          });
+        } else {
+          state.products.push({
+            product: {
+              id: pr.id,
+              name: pr.name,
+              price: pr.price,
+              weight: pr.weight,
+              unit: pr.unit,
+            },
+            quantity: 1,
+            total: 0,
+            priceProduct: pr.price,
+            weightProduct: pr.weight,
+            indexCate: idxCate,
+          });
+          state.categories[idxCate]?.orderDetailList?.push({
+            product: {
+              id: pr.id,
+              name: pr.name,
+              price: pr.price,
+              weight: pr.weight,
+            },
+            quantity: pr.quantity,
+            total: 0,
+            priceProduct: pr.price,
+            weightProduct: pr.weight,
+            description: pr.description,
+          });
+        }
+      });
+    },
+
+    resetCart(state) {
+      state.products = [];
+      state.categories = [];
+    },
+
+    deleteProducts(state, action) {
+      const updateProduct = state.products.filter((item) => item.product.id !== action.payload);
+
+      state.products = updateProduct;
+    },
+
+    deleteCategories(state, action) {
+      const { idx, categoryId } = action.payload;
+      const updateCategory = state.categories.filter((item) => item.categoryId !== categoryId);
+
+      state.categories = updateCategory;
+
+      const updateProduct = state.products.filter((item) => item.indexCate !== idx);
+      state.products = updateProduct;
+    },
+
+    deleteCategoriesProduct(state, action) {
+      const { idx, index } = action.payload;
+      state.categories[idx]?.orderDetailList?.splice(index, 1);
+
+      const updateProduct = state.products.filter((item, index) => index !== idx * state.categories.length + index);
+      state.products = updateProduct;
+    },
+
     // GET PRODUCT
     getProductSuccess(state, action) {
       state.isLoading = false;
       state.product = action.payload;
-    },
-
-    //  SORT & FILTER PRODUCTS
-    sortByProducts(state, action) {
-      state.sortBy = action.payload;
-    },
-
-    filterProducts(state, action) {
-      state.filters.gender = action.payload.gender;
-      state.filters.category = action.payload.category;
-      state.filters.colors = action.payload.colors;
-      state.filters.priceRange = action.payload.priceRange;
-      state.filters.rating = action.payload.rating;
-      state.filters.quote = action.payload.quote;
-    },
-
-    // CHECKOUT
-    getCart(state, action) {
-      const cart = action.payload;
-
-      const subtotal = sum(cart.map((cartItem) => cartItem.price * cartItem.quantity));
-      const discount = cart.length === 0 ? 0 : state.checkout.discount;
-      const shipping = cart.length === 0 ? 0 : state.checkout.shipping;
-      const billing = cart.length === 0 ? null : state.checkout.billing;
-
-      state.checkout.cart = cart;
-      state.checkout.discount = discount;
-      state.checkout.shipping = shipping;
-      state.checkout.billing = billing;
-      state.checkout.subtotal = subtotal;
-      state.checkout.total = subtotal - discount;
-    },
-
-    addCart(state, action) {
-      const product = action.payload;
-      const isEmptyCart = state.checkout.cart.length === 0;
-
-      if (isEmptyCart) {
-        state.checkout.cart = [...state.checkout.cart, product];
-      } else {
-        state.checkout.cart = state.checkout.cart.map((_product) => {
-          const isExisted = _product.id === product.id;
-          if (isExisted) {
-            return {
-              ..._product,
-              quantity: _product.quantity + 1,
-            };
-          }
-          return _product;
-        });
-      }
-      state.checkout.cart = uniqBy([...state.checkout.cart, product], 'id');
-    },
-
-    deleteCart(state, action) {
-      const updateCart = state.checkout.cart.filter((item) => item.id !== action.payload);
-
-      state.checkout.cart = updateCart;
-    },
-
-    resetCart(state) {
-      state.checkout.activeStep = 0;
-      state.checkout.cart = [];
-      state.checkout.total = 0;
-      state.checkout.subtotal = 0;
-      state.checkout.discount = 0;
-      state.checkout.shipping = 0;
-      state.checkout.billing = null;
-    },
-
-    onBackStep(state) {
-      state.checkout.activeStep -= 1;
-    },
-
-    onNextStep(state) {
-      state.checkout.activeStep += 1;
-    },
-
-    onGotoStep(state, action) {
-      const goToStep = action.payload;
-      state.checkout.activeStep = goToStep;
-    },
-
-    increaseQuantity(state, action) {
-      const productId = action.payload;
-      const updateCart = state.checkout.cart.map((product) => {
-        if (product.id === productId) {
-          return {
-            ...product,
-            quantity: product.quantity + 1,
-          };
-        }
-        return product;
-      });
-
-      state.checkout.cart = updateCart;
-    },
-
-    decreaseQuantity(state, action) {
-      const productId = action.payload;
-      const updateCart = state.checkout.cart.map((product) => {
-        if (product.id === productId) {
-          return {
-            ...product,
-            quantity: product.quantity - 1,
-          };
-        }
-        return product;
-      });
-
-      state.checkout.cart = updateCart;
-    },
-
-    createBilling(state, action) {
-      state.checkout.billing = action.payload;
-    },
-
-    applyDiscount(state, action) {
-      const discount = action.payload;
-      state.checkout.discount = discount;
-      state.checkout.total = state.checkout.subtotal - discount;
-    },
-
-    applyShipping(state, action) {
-      const shipping = action.payload;
-      state.checkout.shipping = shipping;
-      state.checkout.total = state.checkout.subtotal - state.checkout.discount + shipping;
     },
   },
 });
@@ -194,13 +206,21 @@ export default slice.reducer;
 
 // Actions
 export const {
+  addProducts,
+  resetCart,
+  deleteProducts,
+  addCategories,
+  addInitCategories,
+  updateCategoryName,
+  deleteCategories,
+  deleteCategoriesProduct,
+  addIsMultiCate,
   getCart,
   addCart,
-  resetCart,
+  deleteCart,
   onGotoStep,
   onBackStep,
   onNextStep,
-  deleteCart,
   createBilling,
   applyShipping,
   applyDiscount,

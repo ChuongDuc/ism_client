@@ -1,231 +1,183 @@
 // noinspection JSUnresolvedFunction,JSValidateTypes
 
 import PropTypes from 'prop-types';
-import { useState } from 'react';
-import { Controller, useForm } from 'react-hook-form';
-import { Card, CardHeader, Checkbox, Divider, FormControlLabel, IconButton, MenuItem, Stack } from '@mui/material';
-import { orderPropTypes, Role, userPropTypes } from '../../../../../constant';
-import Iconify from '../../../../../components/Iconify';
-import MenuPopover from '../../../../../components/MenuPopover';
+import { Card, CardHeader } from '@mui/material';
+import { styled } from '@mui/material/styles';
+import Stepper from '@mui/material/Stepper';
+import Step from '@mui/material/Step';
+import StepLabel from '@mui/material/StepLabel';
+import Tooltip from '@mui/material/Tooltip';
+import IconLocalShipping from '@mui/icons-material/LocalShipping';
+import PostAddIcon from '@mui/icons-material/PostAdd';
+import ModeIcon from '@mui/icons-material/Mode';
+import SupportAgentIcon from '@mui/icons-material/SupportAgent';
+import DoneIcon from '@mui/icons-material/Done';
+import StepConnector, { stepConnectorClasses } from '@mui/material/StepConnector';
+import { useEffect, useState } from 'react';
+import useResponsive from '../../../../../hooks/useResponsive';
 
 // ----------------------------------------------------------------------
 
-const SALE_TASKS = ['Tạo báo giá', 'Chăm sóc khách hàng', 'Tạo hợp đồng', 'Chốt đơn', 'Tạo lệnh xuất hàng'];
-
-const DRIVER_TASKS = ['Nhận lệnh xuất hàng', 'Đang giao hàng', 'Giao hàng thành công'];
-
-const ACC_TASKS = [
-  'Kiểm tra thông tin đơn hàng có hợp lệ không',
-  'Xác nhận hình ảnh, giấy tờ giao hàng',
-  'Xác nhận thanh toán',
-];
+const DELIVERY_TASKS = ['Tạo mới', 'Báo giá - CSKH', 'Chốt đơn - Tạo lệnh xuất hàng', 'Đang giao hàng'];
 
 // ----------------------------------------------------------------------
-const checkOrderTaskPermission = (user, order, role) => {
-  switch (role) {
-    case Role.sales:
-      return user?.role === Role.sales && order?.sale?.id && user?.id && order.sale.id === user.id;
-    case Role.driver:
-      return user?.role === Role.driver && order?.driver?.id && user?.id && order.driver.id === user.id;
-    case Role.accountant:
-      return user?.role === Role.accountant;
-    default:
-      return false;
+const handleActiveDeliveryStep = (order, currentStatus) => {
+  if (order?.status === 'creatNew') {
+    return 0;
   }
+  if (order?.status === 'priceQuotation') {
+    return 1;
+  }
+  if (order?.status === 'createExportOrder') {
+    return 2;
+  }
+  if (order?.status === 'delivery') {
+    return 3;
+  }
+  if (order?.status === 'successDelivery') {
+    return 4;
+  }
+  if ((order?.status === 'paymentConfirmation' || order?.status === 'paid') && order?.deliverOrderList.length < 1) {
+    return 1;
+  }
+  if (
+    (order?.status === 'paymentConfirmation' || order?.status === 'paid') &&
+    order?.deliverOrderList.length > 0 &&
+    currentStatus === 'giao hang thanh cong'
+  ) {
+    return 4;
+  }
+  if (
+    (order?.status === 'paymentConfirmation' || order?.status === 'paid') &&
+    order?.deliverOrderList.length > 0 &&
+    currentStatus !== 'giao hang thanh cong'
+  ) {
+    return 3;
+  }
+  if (order?.status === 'done') {
+    return 4;
+  }
+  return -1;
 };
+
 // ----------------------------------------------------------------------
 TasksNeedToBeDone.propTypes = {
-  order: orderPropTypes().isRequired,
-  user: userPropTypes().isRequired,
+  order: PropTypes.object.isRequired,
+  listStatus: PropTypes.any,
 };
 
-export default function TasksNeedToBeDone({ order, user }) {
-  const { control } = useForm({
-    defaultValues: {
-      saleTaskCompleted: [SALE_TASKS[0]],
-      driverTaskCompleted: [DRIVER_TASKS[0]],
-      accountantTaskCompleted: [ACC_TASKS[0]],
+export default function TasksNeedToBeDone({ order, listStatus }) {
+  const [currentStatus, setCurrentStatus] = useState([]);
+  useEffect(() => {
+    if (listStatus) {
+      setCurrentStatus(listStatus.filter((status) => status.fromStatus === 'Giao hàng thành công'));
+    }
+  }, [listStatus]);
+  const isDesktop = useResponsive('up', 'sm');
+  return (
+    <>
+      <Card>
+        <CardHeader sx={{ mb: 3 }} title="Thông tin vận chuyển" />
+        <Stepper
+          sx={{ mb: 3 }}
+          alternativeLabel
+          activeStep={handleActiveDeliveryStep(order, currentStatus)}
+          connector={<ColorlibConnector />}
+        >
+          {DELIVERY_TASKS.map((label, index) => (
+            <Step key={label}>
+              {!isDesktop ? (
+                <Tooltip title={label}>
+                  <StepLabel StepIconComponent={ColorlibDeliveryStepIcon} icon={index + 1} />
+                </Tooltip>
+              ) : (
+                <StepLabel StepIconComponent={ColorlibDeliveryStepIcon}>{label}</StepLabel>
+              )}
+            </Step>
+          ))}
+        </Stepper>
+      </Card>
+    </>
+  );
+}
+
+// ----------------------------------------------------------------------
+
+// -------------------------------------------------------------
+const ColorlibConnector = styled(StepConnector)(({ theme }) => ({
+  [`&.${stepConnectorClasses.alternativeLabel}`]: {
+    top: 22,
+  },
+  [`&.${stepConnectorClasses.active}`]: {
+    [`& .${stepConnectorClasses.line}`]: {
+      backgroundImage: 'linear-gradient( 95deg,rgb(242,113,33) 0%,rgb(233,64,87) 50%,rgb(138,35,135) 100%)',
     },
-  });
+  },
+  [`&.${stepConnectorClasses.completed}`]: {
+    [`& .${stepConnectorClasses.line}`]: {
+      backgroundImage: 'linear-gradient( 95deg,rgb(242,113,33) 0%,rgb(233,64,87) 50%,rgb(138,35,135) 100%)',
+    },
+  },
+  [`& .${stepConnectorClasses.line}`]: {
+    height: 3,
+    border: 0,
+    backgroundColor: theme.palette.mode === 'dark' ? theme.palette.grey[800] : '#eaeaf0',
+    borderRadius: 1,
+  },
+}));
+
+const ColorlibStepIconRoot = styled('div')(({ theme, ownerState }) => ({
+  backgroundColor: theme.palette.mode === 'dark' ? theme.palette.grey[700] : '#ccc',
+  zIndex: 1,
+  color: '#fff',
+  width: !ownerState.isDesktop ? 34 : 48,
+  height: !ownerState.isDesktop ? 34 : 48,
+  display: 'flex',
+  borderRadius: '50%',
+  justifyContent: 'center',
+  alignItems: 'center',
+  ...(ownerState.active && {
+    backgroundImage: 'linear-gradient( 136deg, rgb(242,113,33) 0%, rgb(233,64,87) 50%, rgb(138,35,135) 100%)',
+    boxShadow: '0 4px 10px 0 rgba(0,0,0,.25)',
+  }),
+  ...(ownerState.completed && {
+    backgroundImage: 'linear-gradient( 136deg, rgb(242,113,33) 0%, rgb(233,64,87) 50%, rgb(138,35,135) 100%)',
+  }),
+}));
+// ------------------------------------------------------------------------------------------
+function ColorlibDeliveryStepIcon(props) {
+  const { active, completed, className } = props;
+  const isDesktop = useResponsive('up', 'sm');
+
+  const icons = {
+    1: <ModeIcon />,
+    2: <SupportAgentIcon />,
+    3: <PostAddIcon />,
+    4: <IconLocalShipping />,
+    5: <DoneIcon />,
+  };
 
   return (
-    <>
-      <Card>
-        <CardHeader title="Xác nhận của nhân viên kinh doanh" />
-
-        <Controller
-          name="saleTaskCompleted"
-          control={control}
-          render={({ field }) => {
-            const onSelected = (saleTask) =>
-              field.value.includes(saleTask)
-                ? field.value.filter((value) => value !== saleTask)
-                : [...field.value, saleTask];
-            return (
-              <>
-                {SALE_TASKS.map((saleTask) => (
-                  <TaskItem
-                    key={saleTask}
-                    task={saleTask}
-                    checked={field.value.includes(saleTask)}
-                    isPermission={checkOrderTaskPermission(user, order, Role.sales)}
-                    onChange={() => field.onChange(onSelected(saleTask))}
-                  />
-                ))}
-              </>
-            );
-          }}
-        />
-      </Card>
-
-      <Card>
-        <CardHeader title="Xác nhận của lái xe" />
-        <Controller
-          name="driverTaskCompleted"
-          control={control}
-          render={({ field }) => {
-            const onSelected = (driverTask) =>
-              field.value.includes(driverTask)
-                ? field.value.filter((value) => value !== driverTask)
-                : [...field.value, driverTask];
-
-            return (
-              <>
-                {DRIVER_TASKS.map((driverTask) => (
-                  <TaskItem
-                    key={driverTask}
-                    task={driverTask}
-                    checked={field.value.includes(driverTask)}
-                    isPermission={checkOrderTaskPermission(user, order, Role.driver)}
-                    onChange={() => field.onChange(onSelected(driverTask))}
-                  />
-                ))}
-              </>
-            );
-          }}
-        />
-      </Card>
-
-      <Card>
-        <CardHeader title="Xác nhận của kế toán" />
-        <Controller
-          name="accountantTaskCompleted"
-          control={control}
-          render={({ field }) => {
-            const onSelected = (accountantTask) =>
-              field.value.includes(accountantTask)
-                ? field.value.filter((value) => value !== accountantTask)
-                : [...field.value, accountantTask];
-
-            return (
-              <>
-                {ACC_TASKS.map((accountantTask) => (
-                  <TaskItem
-                    key={accountantTask}
-                    task={accountantTask}
-                    checked={field.value.includes(accountantTask)}
-                    isPermission={checkOrderTaskPermission(user, order, Role.accountant)}
-                    onChange={() => field.onChange(onSelected(accountantTask))}
-                  />
-                ))}
-              </>
-            );
-          }}
-        />
-      </Card>
-    </>
+    <ColorlibStepIconRoot ownerState={{ completed, active, isDesktop }} className={className}>
+      {icons[String(props.icon)]}
+    </ColorlibStepIconRoot>
   );
 }
 
-// ----------------------------------------------------------------------
-
-TaskItem.propTypes = {
-  task: PropTypes.string,
-  checked: PropTypes.bool,
-  onChange: PropTypes.func,
-  isPermission: PropTypes.bool,
+ColorlibDeliveryStepIcon.propTypes = {
+  /**
+   * Whether this step is active.
+   * @default false
+   */
+  active: PropTypes.bool,
+  className: PropTypes.string,
+  /**
+   * Mark the step as completed. Is passed to child components.
+   * @default false
+   */
+  completed: PropTypes.bool,
+  /**
+   * The label displayed in the step icon.
+   */
+  icon: PropTypes.node,
 };
-
-function TaskItem({ task, checked, onChange, isPermission = false }) {
-  return (
-    <Stack
-      direction="row"
-      sx={{
-        px: 2,
-        py: 0.75,
-        ...(checked && {
-          color: 'text.disabled',
-          textDecoration: 'line-through',
-        }),
-      }}
-    >
-      <FormControlLabel
-        control={
-          isPermission ? <Checkbox checked={checked} onChange={onChange} /> : <Checkbox checked={checked} disabled />
-        }
-        label={task}
-        sx={{ flexGrow: 1, m: 0 }}
-      />
-      {isPermission && <MoreMenuButton />}
-    </Stack>
-  );
-}
-
-// ----------------------------------------------------------------------
-
-function MoreMenuButton() {
-  const [open, setOpen] = useState(null);
-
-  const handleOpen = (event) => {
-    setOpen(event.currentTarget);
-  };
-
-  const handleClose = () => {
-    setOpen(null);
-  };
-
-  const ICON = {
-    mr: 2,
-    width: 20,
-    height: 20,
-  };
-
-  return (
-    <>
-      <IconButton size="large" onClick={handleOpen}>
-        <Iconify icon={'eva:more-vertical-fill'} width={20} height={20} />
-      </IconButton>
-
-      <MenuPopover
-        open={Boolean(open)}
-        anchorEl={open}
-        onClose={handleClose}
-        anchorOrigin={{ vertical: 'top', horizontal: 'left' }}
-        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-        arrow="right-top"
-        sx={{
-          mt: -0.5,
-          width: 'auto',
-          '& .MuiMenuItem-root': { px: 1, typography: 'body2', borderRadius: 0.75 },
-        }}
-      >
-        <MenuItem>
-          <Iconify icon={'eva:checkmark-circle-2-fill'} sx={{ ...ICON }} />
-          Xác nhận hoàn thành
-        </MenuItem>
-
-        <MenuItem>
-          <Iconify icon={'eva:edit-fill'} sx={{ ...ICON }} />
-          Sửa
-        </MenuItem>
-
-        <Divider sx={{ borderStyle: 'dashed' }} />
-
-        <MenuItem sx={{ color: 'error.main' }}>
-          <Iconify icon={'eva:trash-2-outline'} sx={{ ...ICON }} />
-          Xóa
-        </MenuItem>
-      </MenuPopover>
-    </>
-  );
-}

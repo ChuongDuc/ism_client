@@ -40,3 +40,11 @@ export function convertStringToNumber(str) {
 
   return 0;
 }
+
+export function formatNumberWithCommas(number) {
+  return number.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 2 });
+}
+
+export function formatPhoneNumber(phoneNumber) {
+  return phoneNumber.replace(/(\d{4})(\d{3})(\d{3})/, '$1 $2 $3');
+}

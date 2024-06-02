@@ -9,7 +9,6 @@ query ListAllInventory($input: ListAllInventoryInput!) {
         weight
         quantity
         unit
-        description
         updatedAt
         createdAt
       }

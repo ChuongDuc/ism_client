@@ -1,34 +1,24 @@
 import { useParams } from 'react-router-dom';
-import { Box, Card, Container, Tab, Tabs } from '@mui/material';
-import { styled } from '@mui/material/styles';
-import { _orders } from '../../_mock';
-import useSettings from '../../hooks/useSettings';
+import { Box, Container, Tab, Tabs, Typography } from '@mui/material';
+import { loader } from 'graphql.macro';
+import { useEffect, useState } from 'react';
+import { useQuery } from '@apollo/client';
 import Page from '../../components/Page';
 import Iconify from '../../components/Iconify';
 import useTabs from '../../hooks/useTabs';
-import PersonInChargeProfile from '../../sections/@dashboard/order/overview/PersonInChargeProfile';
 import { Overview } from '../../sections/@dashboard/order/overview';
 import { QuotationInfo } from '../../sections/@dashboard/order/overview/quotation';
 import { SummaryDeliveryOrder } from '../../sections/@dashboard/order/overview/delivery-order';
 import { Role } from '../../constant';
 import useAuth from '../../hooks/useAuth';
+import RoleBasedGuard from '../../guards/RoleBasedGuard';
+import { SkeletonMap } from '../../components/skeleton';
+import CommonBackdrop from '../../components/CommonBackdrop';
 
 // ----------------------------------------------------------------------
-const TabsWrapperStyle = styled('div')(({ theme }) => ({
-  zIndex: 9,
-  bottom: 0,
-  width: '100%',
-  display: 'flex',
-  position: 'absolute',
-  backgroundColor: theme.palette.background.paper,
-  [theme.breakpoints.up('sm')]: {
-    justifyContent: 'center',
-  },
-  [theme.breakpoints.up('md')]: {
-    justifyContent: 'flex-end',
-    paddingRight: theme.spacing(3),
-  },
-}));
+
+const ORDER_BY_ID = loader('../../graphql/queries/order/getOrderById.graphql');
+
 // ----------------------------------------------------------------------
 
 const commonTabLabel = 'Thông tin chung';
@@ -42,37 +32,38 @@ const commonTab = (order) => ({
   component: <Overview order={order} />,
 });
 
-const quotationTab = (order) => ({
+const quotationTab = (order, refetchData) => ({
   value: 'quotation',
   label: quotationTabLabel,
   icon: <Iconify icon={'icon-park-outline:transaction-order'} width={20} height={20} />,
-  component: <QuotationInfo order={order} />,
+  component: <QuotationInfo order={order} refetchData={refetchData} />,
 });
-const deliveryOrderTab = (order) => ({
+
+const deliveryOrderTab = (order, setCurrentTab) => ({
   value: 'deliveryOrder',
   label: deliveryOrderTabLabel,
   icon: <Iconify icon={'mdi:truck-delivery-outline'} width={20} height={20} />,
-  component: <SummaryDeliveryOrder order={order} />,
+  component: <SummaryDeliveryOrder order={order} setCurrentTab={setCurrentTab} />,
 });
 
-const ORDER_INFO_TABS = (order, userRole) => {
+const ORDER_INFO_TABS = (order, userRole, refetchData, setCurrentTab) => {
   switch (userRole) {
     case Role.admin:
-      return [commonTab(order), quotationTab(order), deliveryOrderTab(order)];
+      return [quotationTab(order, refetchData), deliveryOrderTab(order, setCurrentTab), commonTab(order)];
     case Role.manager:
-      return [commonTab(order), quotationTab(order), deliveryOrderTab(order)];
+      return [quotationTab(order, refetchData), deliveryOrderTab(order, setCurrentTab), commonTab(order)];
     case Role.director:
-      return [commonTab(order), quotationTab(order), deliveryOrderTab(order)];
+      return [quotationTab(order, refetchData), deliveryOrderTab(order, setCurrentTab), commonTab(order)];
     case Role.accountant:
-      return [commonTab(order), quotationTab(order), deliveryOrderTab(order)];
+      return [quotationTab(order, refetchData), deliveryOrderTab(order, setCurrentTab), commonTab(order)];
     case Role.sales:
-      return [commonTab(order), quotationTab(order), deliveryOrderTab(order)];
+      return [quotationTab(order, refetchData), deliveryOrderTab(order, setCurrentTab), commonTab(order)];
     case Role.driver:
-      return [commonTab(order), deliveryOrderTab(order)];
+      return [deliveryOrderTab(order, setCurrentTab)];
     case Role.transporterManager:
-      return [commonTab(order), deliveryOrderTab(order)];
+      return [deliveryOrderTab(order, setCurrentTab)];
     case Role.assistantDriver:
-      return [commonTab(order), deliveryOrderTab(order)];
+      return [deliveryOrderTab(order, setCurrentTab)];
     default:
       return [];
   }
@@ -80,46 +71,81 @@ const ORDER_INFO_TABS = (order, userRole) => {
 // ----------------------------------------------------------------------
 
 export default function OrderDetails() {
-  const { themeStretch } = useSettings();
   const { user } = useAuth();
-  const { currentTab, onChangeTab } = useTabs('common');
+
+  const valueTab = user.role === Role.driver || user.role === Role.transporterManager ? 'deliveryOrder' : 'quotation';
+
+  const { currentTab, onChangeTab, setCurrentTab } = useTabs(valueTab);
 
   const { id } = useParams();
 
-  const order = _orders.find((order) => order.id === id);
+  const [myOrder, setMyOrder] = useState(null);
+
+  const [isOrderSale, setIsOrderSale] = useState(false);
+
+  const { data, loading, error, refetch } = useQuery(ORDER_BY_ID, {
+    variables: {
+      orderId: Number(id),
+    },
+  });
+
+  useEffect(() => {
+    if (data) {
+      setMyOrder(data?.getOrderById);
+    }
+  }, [data]);
+
+  console.log(isOrderSale);
+
+  useEffect(() => {
+    if (myOrder?.sale?.id !== Number(user.id) && user.role === Role.sales) {
+      setIsOrderSale(true);
+    } else {
+      setIsOrderSale(false);
+    }
+  }, [user, myOrder?.sale?.id]);
+
+  const handleSetDefaultTab = () => {
+    setCurrentTab('quotation');
+  };
 
   return (
     <Page title="Thông tin đơn hàng">
-      <Container maxWidth={themeStretch ? false : 'xl'}>
-        <Card
-          sx={{
-            mb: 3,
-            height: 230,
-            position: 'relative',
-          }}
-        >
-          <PersonInChargeProfile sale={order.sale} />
+      <RoleBasedGuard isOrderSale={isOrderSale}>
+        <Container maxWidth={false}>
+          {myOrder !== null && (
+            <>
+              <Tabs
+                allowScrollButtonsMobile
+                variant="scrollable"
+                scrollButtons="auto"
+                value={currentTab}
+                onChange={onChangeTab}
+                sx={{ px: 1, mb: 2 }}
+              >
+                {ORDER_INFO_TABS(myOrder, user.role).map((tab) => (
+                  <Tab disableRipple key={tab.value} value={tab.value} icon={tab.icon} label={tab.label} />
+                ))}
+              </Tabs>
 
-          <TabsWrapperStyle>
-            <Tabs
-              allowScrollButtonsMobile
-              variant="scrollable"
-              scrollButtons="auto"
-              value={currentTab}
-              onChange={onChangeTab}
-            >
-              {ORDER_INFO_TABS(order, user.role).map((tab) => (
-                <Tab disableRipple key={tab.value} value={tab.value} icon={tab.icon} label={tab.label} />
-              ))}
-            </Tabs>
-          </TabsWrapperStyle>
-        </Card>
+              {ORDER_INFO_TABS(myOrder, user.role, refetch, handleSetDefaultTab).map((tab) => {
+                const isMatched = tab.value === currentTab;
+                return isMatched && <Box key={tab.value}>{tab.component}</Box>;
+              })}
+            </>
+          )}
 
-        {ORDER_INFO_TABS(order, user.role).map((tab) => {
-          const isMatched = tab.value === currentTab;
-          return isMatched && <Box key={tab.value}>{tab.component}</Box>;
-        })}
-      </Container>
+          {loading && <SkeletonMap />}
+
+          {error && (
+            <Typography textAlign="center" variant="h4">
+              Không tải được dữ liệu
+            </Typography>
+          )}
+
+          <CommonBackdrop loading={loading} />
+        </Container>
+      </RoleBasedGuard>
     </Page>
   );
 }

@@ -532,10 +532,10 @@ export default function OrderList() {
                       key={idx}
                       row={row}
                       idx={idx}
-                      selected={selected.includes(row.orderId)}
-                      onSelectRow={() => onSelectRow(row.orderId)}
-                      onViewRow={() => handleViewRow(row.orderId)}
-                      onDeleteRow={() => handleDeleteRow(row.orderId)}
+                      selected={selected.includes(row.id)}
+                      onSelectRow={() => onSelectRow(row.id)}
+                      onViewRow={() => handleViewRow(row.id)}
+                      onDeleteRow={() => handleDeleteRow(row.id)}
                     />
                   ))}
                   <TableEmptyRows height={56} emptyRows={tableEmptyRows(page, rowsPerPage, tableData.length)} />

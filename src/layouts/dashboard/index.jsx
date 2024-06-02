@@ -36,7 +36,7 @@ const MainStyle = styled('main', {
 // ----------------------------------------------------------------------
 
 export default function DashboardLayout() {
-  const { collapseClick, isCollapse } = useCollapseDrawer();
+  const { collapseClick } = useCollapseDrawer();
 
   const { themeLayout } = useSettings();
 
@@ -84,7 +84,7 @@ export default function DashboardLayout() {
         minHeight: { lg: 1 },
       }}
     >
-      <DashboardHeader isCollapse={isCollapse} onOpenSidebar={() => setOpen(true)} />
+      {/* <DashboardHeader isCollapse={isCollapse} onOpenSidebar={() => setOpen(true)} /> */}
 
       <NavbarVertical isOpenSidebar={open} onCloseSidebar={() => setOpen(false)} />
 

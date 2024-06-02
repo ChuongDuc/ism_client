@@ -56,12 +56,12 @@ export default function CustomerInfoPopup({ customer, isOpen, onClose }) {
 
         <RowStyle>
           <Iconify icon="eva:email-fill" sx={{ mr: 1, width: 16, height: 16, color: 'info.main' }} />
-          <Typography variant="body2">{customer?.email}</Typography>
+          <Typography variant="body2">{customer?.email || 'Chưa có thông tin'}</Typography>
         </RowStyle>
 
         <RowStyle>
           <Iconify icon="mdi:company" sx={{ mr: 1, width: 16, height: 16, color: 'info.main' }} />
-          <Typography variant="body2">{customer?.company}</Typography>
+          <Typography variant="body2">{customer?.company || 'Chưa có thông tin'}</Typography>
         </RowStyle>
       </DialogContent>
     </DialogAnimate>

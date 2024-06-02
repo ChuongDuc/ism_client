@@ -36,11 +36,27 @@ query FilterAllOrder($input: FilterAllOrderInput!) {
           }
           invoiceNo
           VAT
+          discount
           status
+          driver {
+            id
+            role
+            email
+            address
+            phoneNumber
+            fullName
+            userName
+          }
           freightPrice
+          percentOfAdvancePayment
+          reportingValidityAmount
+          deliveryMethodDescription
+          executionTimeDescription
+          freightMessage
           deliverAddress
           itemGroupList {
             id
+            name
             description
             createdAt
             updatedAt
@@ -50,6 +66,8 @@ query FilterAllOrder($input: FilterAllOrderInput!) {
               priceProduct
               weightProduct
               description
+              otherNote
+              deliveryMethodNote
               product {
                 id
                 description
@@ -60,7 +78,10 @@ query FilterAllOrder($input: FilterAllOrderInput!) {
                 weight
                 price
                 code
+                available
+                type
                 unit
+                formType
               }
             }
           }
@@ -72,19 +93,11 @@ query FilterAllOrder($input: FilterAllOrderInput!) {
           }
           deliverOrderList {
             id
-            customer {
-              id
-              name
-            }
             deliveryDate
+            documentNote
             cranesNote
             receivingNote
-            receivingNote
-            deliveryDate
-            driver {
-              id
-              fullName
-            }
+            otherNote
           }
           totalMoney
           remainingPaymentMoney

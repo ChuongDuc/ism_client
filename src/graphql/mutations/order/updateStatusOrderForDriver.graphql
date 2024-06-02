@@ -1,0 +1,3 @@
+mutation UpdateStatusOrderForDriver($input:UpdateStatusOrderForDriverInput!){
+    updateStatusOrderForDriver(input: $input)
+}

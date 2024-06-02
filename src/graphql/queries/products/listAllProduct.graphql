@@ -7,16 +7,25 @@ query ListAllProducts($input: ListAllProductsInput!) {
         name
         code
         price
+        createdAt
+        updatedAt
+        priceWithVAT
+        priceWithoutVAT
         weight
+        createdAt
+        updatedAt
         height
+        type
+        width
+        available
         category{
           id
           name
         }
+        subCategory
         unit
+        formType
         description
-        createdAt
-        updatedAt
       }
     }
     pageInfo{

@@ -19,9 +19,18 @@ DialogVATFormType.propTypes = {
   productId: PropTypes.array,
   isOpen: PropTypes.bool,
   onClose: PropTypes.func,
+  isEditingPriceWithoutVAT: PropTypes.bool,
+  isEditingPriceWithVAT: PropTypes.bool,
   refetchData: PropTypes.func,
 };
-export default function DialogVATFormType({ productId, isOpen, onClose, refetchData }) {
+export default function DialogVATFormType({
+  productId,
+  isOpen,
+  onClose,
+  isEditingPriceWithoutVAT,
+  isEditingPriceWithVAT,
+  refetchData,
+}) {
   const { enqueueSnackbar } = useSnackbar();
 
   const [updatePriceProduct] = useMutation(UPDATE_PRICE_PRODUCT, {
@@ -33,13 +42,22 @@ export default function DialogVATFormType({ productId, isOpen, onClose, refetchD
     },
   });
 
-  const NewPriceSchema = Yup.object().shape({
-    price: Yup.number().moreThan(0, 'Giá không được là 0.00 VNĐ'),
-  });
+  let NewPriceSchema;
+  if (isEditingPriceWithoutVAT) {
+    NewPriceSchema = Yup.object().shape({
+      priceWithoutVAT: Yup.number().moreThan(0, 'Giá không được là 0.00 VNĐ'),
+    });
+  }
+  if (isEditingPriceWithVAT) {
+    NewPriceSchema = Yup.object().shape({
+      priceWithVAT: Yup.number().moreThan(0, 'Giá không được là 0.00 VNĐ'),
+    });
+  }
 
   const defaultValues = useMemo(
     () => ({
-      price: 0,
+      priceWithoutVAT: 0,
+      priceWithVAT: 0,
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     []
@@ -65,7 +83,8 @@ export default function DialogVATFormType({ productId, isOpen, onClose, refetchD
         variables: {
           input: {
             productId,
-            price: Number(values.price),
+            priceWithVAT: isEditingPriceWithVAT ? Number(values.priceWithVAT) : null,
+            priceWithoutVAT: isEditingPriceWithoutVAT ? Number(values.priceWithoutVAT) : null,
           },
         },
         onError: () => {
@@ -100,18 +119,34 @@ export default function DialogVATFormType({ productId, isOpen, onClose, refetchD
           <DialogTitle sx={{ textAlign: 'center' }}>Sửa giá sản phẩm</DialogTitle>
           <DialogContent sx={{ paddingTop: '24px !important', minWidth: '400px', minHeight: '200px' }}>
             <Stack spacing={3} sx={{ p: 3 }}>
-              <RHFNumberField
-                size={'small'}
-                name="price"
-                label="Giá sản phẩm"
-                placeholder="0.00"
-                value={fVietNamCurrency(values.price)}
-                InputProps={{
-                  endAdornment: <InputAdornment position="start">VNĐ</InputAdornment>,
-                }}
-                setValue={setValue}
-                InputLabelProps={{ shrink: true }}
-              />
+              {isEditingPriceWithoutVAT && (
+                <RHFNumberField
+                  size={'small'}
+                  name="priceWithoutVAT"
+                  label="Giá chưa VAT"
+                  placeholder="0.00"
+                  value={fVietNamCurrency(values.priceWithoutVAT)}
+                  InputProps={{
+                    endAdornment: <InputAdornment position="start">VNĐ</InputAdornment>,
+                  }}
+                  setValue={setValue}
+                  InputLabelProps={{ shrink: true }}
+                />
+              )}
+              {isEditingPriceWithVAT && (
+                <RHFNumberField
+                  size={'small'}
+                  name="priceWithVAT"
+                  label="Giá có VAT"
+                  placeholder="0.00"
+                  value={fVietNamCurrency(values.priceWithVAT)}
+                  InputProps={{
+                    endAdornment: <InputAdornment position="start">VNĐ</InputAdornment>,
+                  }}
+                  setValue={setValue}
+                  InputLabelProps={{ shrink: true }}
+                />
+              )}
             </Stack>
           </DialogContent>
 

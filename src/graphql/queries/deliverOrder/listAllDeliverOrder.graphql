@@ -1,0 +1,139 @@
+query ListAllDeliverOrder($input: ListAllDeliverOrderInput!) {
+  listAllDeliverOrder(input: $input) {
+    deliverOrder {
+      totalCount
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
+      edges {
+        cursor
+        node {
+          id
+          customer {
+            name
+            id
+            phoneNumber
+            email
+            company
+          }
+          order {
+            id
+            customer {
+              id
+              name
+              email
+              phoneNumber
+              company
+            }
+            sale {
+              id
+              role
+              email
+              address
+              phoneNumber
+              fullName
+              userName
+            }
+            invoiceNo
+            VAT
+            discount
+            status
+            driver {
+              id
+              role
+              email
+              address
+              phoneNumber
+              fullName
+              userName
+            }
+            freightPrice
+            percentOfAdvancePayment
+            reportingValidityAmount
+            deliveryMethodDescription
+            executionTimeDescription
+            freightMessage
+            deliverAddress
+            itemGroupList {
+              id
+              name
+              description
+              createdAt
+              updatedAt
+              orderDetailList {
+                id
+                quantity
+                priceProduct
+                weightProduct
+                totalWeight
+                description
+                otherNote
+                deliveryMethodNote
+                product {
+                  id
+                  description
+                  name
+                  updatedAt
+                  createdAt
+                  width
+                  weight
+                  price
+                  code
+                  available
+                  type
+                  unit
+                  formType
+                }
+              }
+            }
+            paymentList {
+              id
+              money
+              description
+              updatedAt
+            }
+            deliverOrderList {
+              id
+              deliveryDate
+              documentNote
+              cranesNote
+              receivingNote
+              otherNote
+              driver {
+                id
+                fullName
+                phoneNumber
+              }
+            }
+            totalMoney
+            remainingPaymentMoney
+            createdAt
+            updatedAt
+          }
+          driver {
+            id
+            fullName
+            phoneNumber
+            firstName
+            lastName
+            role
+          }
+
+          deliveryDate
+          description
+          receivingNote
+          cranesNote
+          documentNote
+          otherNote
+          createdAt
+          updatedAt
+        }
+      }
+    }
+    allOrderCounter
+    creatNewOrderCounter
+    inProcessingCounter
+    doneOrderCounter
+  }
+}

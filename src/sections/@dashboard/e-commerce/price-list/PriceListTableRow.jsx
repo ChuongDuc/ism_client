@@ -19,7 +19,7 @@ PriceListTableRow.propTypes = {
 };
 
 export default function PriceListTableRow({ row, selected, idx, onEditRow, onSelectRow }) {
-  const { name, weight, code, price, height } = row;
+  const { name, weight, priceWithoutVAT, priceWithVAT, height } = row;
 
   const { user } = useAuth();
 
@@ -46,10 +46,6 @@ export default function PriceListTableRow({ row, selected, idx, onEditRow, onSel
       </TableCell>
 
       <TableCell>
-        <Typography variant="caption">{code}</Typography>
-      </TableCell>
-
-      <TableCell>
         <Typography variant="caption">{height}</Typography>
       </TableCell>
 
@@ -58,11 +54,19 @@ export default function PriceListTableRow({ row, selected, idx, onEditRow, onSel
       </TableCell>
 
       <TableCell align="left">
-        <Typography variant="caption">{price}</Typography>
+        <Typography variant="caption">{fVietNamCurrency(priceWithoutVAT)}</Typography>
       </TableCell>
 
       <TableCell align="left">
-        <Typography variant="caption">{fVietNamCurrency(Number(price) * Number(weight))}</Typography>
+        <Typography variant="caption">{fVietNamCurrency(Number(priceWithoutVAT) * Number(weight))}</Typography>
+      </TableCell>
+
+      <TableCell align="left">
+        <Typography variant="caption">{fVietNamCurrency(priceWithVAT)}</Typography>
+      </TableCell>
+
+      <TableCell align="left">
+        <Typography variant="caption">{fVietNamCurrency(Number(priceWithVAT) * Number(weight))}</Typography>
       </TableCell>
 
       <TableCell align="right">

@@ -8,8 +8,24 @@ export function fDate(date) {
   return format(new Date(date), 'dd MMMM yyyy');
 }
 
+export function fDateToDay(date) {
+  return format(new Date(date), 'dd');
+}
+
+export function fDateToYear(date) {
+  return format(new Date(date), 'yyyy');
+}
+
+export function fDateToMonth(date) {
+  return format(new Date(date), 'MM');
+}
+
 export function fddMMYYYYWithSlash(date) {
   return format(new Date(date), 'dd/MM/yyyy');
+}
+
+export function fYearMonthDay(date) {
+  return format(new Date(date), 'yyyy/MM/dd');
 }
 
 export function fDateTime(date) {
@@ -39,4 +55,14 @@ export function getNextNDay(no) {
   const nextDay = new Date(today);
   nextDay.setDate(nextDay.getDate() + no);
   return nextDay;
+}
+
+export function getDateNextNMonth(date, no) {
+  const nextMonth = new Date(date);
+  nextMonth.setMonth(nextMonth.getMonth() + no);
+  return nextMonth;
+}
+
+export function fMonthYear(date) {
+  return format(new Date(date), 'MM/yyyy');
 }

@@ -1,64 +1,39 @@
 // noinspection JSValidateTypes,DuplicatedCode
 
-import { useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  Box,
-  Card,
-  Container,
-  Divider,
-  FormControlLabel,
-  IconButton,
-  Stack,
-  Switch,
-  Tab,
-  Table,
-  TableBody,
-  TableContainer,
-  TablePagination,
-  Tabs,
-  Tooltip,
-} from '@mui/material';
+import { Card, Container, Stack, Tab, Table, TableBody, TableContainer, Tabs } from '@mui/material';
+import { loader } from 'graphql.macro';
+import { useMutation, useQuery } from '@apollo/client';
+import { useSnackbar } from 'notistack';
 import { PATH_DASHBOARD } from '../../routes/paths';
 import useTabs from '../../hooks/useTabs';
-import useSettings from '../../hooks/useSettings';
-import useTable, { emptyRows, getComparator } from '../../hooks/useTable';
-import { _orders } from '../../_mock';
+import useTable from '../../hooks/useTable';
 import Page from '../../components/Page';
 import Label from '../../components/Label';
-import Iconify from '../../components/Iconify';
 import Scrollbar from '../../components/Scrollbar';
 import HeaderBreadcrumbs from '../../components/HeaderBreadcrumbs';
-import { TableEmptyRows, TableHeadCustom, TableNoData, TableSelectedActions } from '../../components/table';
-import { OrderTableToolbar } from '../../sections/@dashboard/order/list';
-import { AllLabel, OrderStatus, Role } from '../../constant';
+import { TableEmptyRows, TableNoData } from '../../components/table';
+import { AllLabel, DefaultMaxHeight, DefaultRowsPerPage, OrderStatus, Role } from '../../constant';
 import useAuth from '../../hooks/useAuth';
 import { DeliveryOrderTableRow } from '../../sections/@dashboard/delivery';
+import DeliverOrderToolbar from '../../sections/@dashboard/order/delivery-order/DeliverOrderToolbar';
+import CommonBackdrop from '../../components/CommonBackdrop';
+import EditOrderDialog from '../../sections/@dashboard/order/list/EditOrderDialog';
+import TableHeadWithoutCheckBoxCustom from '../../components/table/TableHeadWithoutCheckBoxCustom';
 
 // ----------------------------------------------------------------------
-const filterDeliveryOrderFromOrder = (user, orders) => {
-  if (
-    user.role === Role.admin ||
-    user.role === Role.manager ||
-    user.role === Role.director ||
-    user.role === Role.transporterManager ||
-    user.role === Role.accountant
-  ) {
-    return orders.filter((ord) => ord.deliverOrder?.id);
-  }
-  if (user.role === Role.sales) {
-    return orders.filter((ord) => ord.deliverOrder?.id).filter((x) => x.sale.id === user.id);
-  }
-  if (user.role === Role.driver) {
-    return orders.filter((ord) => ord.driver && ord.driver?.id === user.id);
-  }
-  return [];
-};
+
+const LIST_ALL_DELIVER_ORDER = loader('../../graphql/queries/deliverOrder/listAllDeliverOrder.graphql');
+const DELETE_DELIVER_ORDERS = loader('../../graphql/mutations/deliverOrder/deleteDeliverOrders.graphql');
+const GET_ALL_USER = loader('../../graphql/queries/user/getAllUsers.graphql');
+
 // ----------------------------------------------------------------------
 const TABLE_HEAD = [
+  { id: 'idx', label: 'STT', align: 'left', width: 50 },
   { id: 'invoiceNumber', label: 'Mã đơn hàng', align: 'left' },
   { id: 'customer', label: 'Khách hàng', align: 'left' },
-  { id: 'driver', label: 'Lái xe', align: 'left' },
+  { id: 'driver', label: 'Lái xe', align: 'left', minWidth: 80 },
   { id: 'createDate', label: 'Tạo ngày', align: 'left' },
   { id: 'dueDate', label: 'Ngày giao hàng', align: 'left' },
   { id: 'status', label: 'Trạng thái', align: 'left', width: 160 },
@@ -70,9 +45,14 @@ const TABLE_HEAD = [
 export default function DeliveryOrderList() {
   const { user } = useAuth();
 
-  const { themeStretch } = useSettings();
-
   const navigate = useNavigate();
+
+  const [countOrder, setCountOrder] = useState({
+    allOrderCounter: 0,
+    creatNewOrderCounter: 0,
+    doneOrderCounter: 0,
+    inProcessingCounter: 0,
+  });
 
   const {
     dense,
@@ -82,96 +62,265 @@ export default function DeliveryOrderList() {
     rowsPerPage,
     setPage,
     //
-    selected,
-    setSelected,
-    onSelectRow,
-    onSelectAllRows,
-    //
     onSort,
-    onChangeDense,
-    onChangePage,
-    onChangeRowsPerPage,
-  } = useTable({ defaultOrderBy: 'createDate', defaultRowsPerPage: 10 });
+  } = useTable({ defaultOrderBy: 'createDate', defaultRowsPerPage: DefaultRowsPerPage });
 
-  const [tableData, setTableData] = useState(filterDeliveryOrderFromOrder(user, _orders));
+  const { data: getAllSales } = useQuery(GET_ALL_USER, {
+    variables: {
+      input: {
+        role: Role.sales,
+      },
+    },
+  });
+
+  const { data: getAllDrivers } = useQuery(GET_ALL_USER, {
+    variables: {
+      input: {
+        role: Role.driver,
+      },
+    },
+  });
+
+  const [deliverOrder, setDeliverOrder] = useState([]);
+  const [filterUserId, setFilterUserId] = useState(null);
 
   const [filterName, setFilterName] = useState('');
+  const [filterSales, setFilterSales] = useState('Tất cả');
+  const [filterDrivers, setFilterDrivers] = useState('Tất cả');
 
-  const [filterStartDate, setFilterStartDate] = useState(null);
+  const [selectedSaleId, setSelectedSaleId] = useState(null);
+  const [selectedDriverId, setSelectedDriverId] = useState(null);
 
-  const [filterEndDate, setFilterEndDate] = useState(null);
+  const [listSales, setListSales] = useState();
+  const [listDrivers, setListDrivers] = useState();
 
-  const { currentTab: filterStatus, onChangeTab: onFilterStatus } = useTabs('Tất cả');
+  const [isOpen, setIsOpen] = useState(false);
+  const [isOpenView, setIsOpenView] = useState(false);
+
+  const [selectedOrder, setSelectedOrder] = useState();
+
+  const { enqueueSnackbar } = useSnackbar();
 
   const handleFilterName = (filterName) => {
     setFilterName(filterName);
-    setPage(0);
   };
 
-  const handleDeleteRow = (id) => {
-    const deleteRow = tableData.filter((row) => row.id !== id);
-    setSelected([]);
-    setTableData(deleteRow);
+  const handleFilter = (event) => {
+    setFilterSales(event.target.value);
   };
 
-  const handleDeleteRows = (selected) => {
-    const deleteRows = tableData.filter((row) => !selected.includes(row.id));
-    setSelected([]);
-    setTableData(deleteRows);
+  const handleFilterDriver = (event) => {
+    setFilterDrivers(event.target.value);
+  };
+
+  const handleGetSaleId = (event) => {
+    setSelectedSaleId(event);
+  };
+  const handleGetDriverId = (event) => {
+    setSelectedDriverId(event);
+  };
+
+  const { currentTab: filterStatus, onChangeTab: onFilterStatus } = useTabs('Tất cả');
+
+  const [pageInfo, setPageInfo] = useState({
+    hasNextPage: false,
+    endCursor: 0,
+  });
+
+  useEffect(() => {
+    if (getAllSales) {
+      setListSales(getAllSales?.users?.edges.map((edges) => edges.node));
+    }
+  }, [getAllSales]);
+
+  useEffect(() => {
+    if (getAllDrivers) {
+      setListDrivers(getAllDrivers?.users?.edges.map((edges) => edges.node));
+    }
+  }, [getAllDrivers]);
+
+  useEffect(() => {
+    if (user.role === Role.driver) {
+      setFilterUserId(Number(user.id));
+    } else {
+      setFilterUserId(null);
+    }
+  }, [user]);
+
+  const {
+    data: allDeliverOrder,
+    fetchMore,
+    refetch,
+    loading: loadingDeliverOrder,
+  } = useQuery(LIST_ALL_DELIVER_ORDER, {
+    variables: {
+      input: {
+        driverId: user.role === Role.driver ? filterUserId : selectedDriverId,
+        queryString: filterName,
+        saleId: selectedSaleId,
+        status: filterStatus === 'Tất cả' ? null : filterStatus,
+        args: {
+          first: rowsPerPage,
+          after: 0,
+        },
+      },
+    },
+  });
+
+  const [deleteDeliverOrders, { loading: loadingDelete }] = useMutation(DELETE_DELIVER_ORDERS, {
+    onCompleted: () => {
+      enqueueSnackbar('Xóa lệnh giao hàng thành công', {
+        variant: 'success',
+      });
+    },
+
+    onError: (error) => {
+      enqueueSnackbar(`Xóa lệnh giao hàng không thành công. Nguyên nhân: ${error.message}`, {
+        variant: 'error',
+      });
+    },
+  });
+  const updateQuery = (previousResult, { fetchMoreResult }) => {
+    if (!fetchMoreResult) return previousResult;
+    return {
+      ...previousResult,
+      listAllDeliverOrder: {
+        ...previousResult?.listAllDeliverOrder,
+        deliverOrder: {
+          edges: [
+            ...previousResult.listAllDeliverOrder?.deliverOrder?.edges,
+            ...fetchMoreResult?.listAllDeliverOrder?.deliverOrder?.edges,
+          ],
+          pageInfo: fetchMoreResult?.listAllDeliverOrder?.deliverOrder?.pageInfo,
+          totalCount: fetchMoreResult?.listAllDeliverOrder?.deliverOrder?.totalCount,
+        },
+        doneOrderCounter: fetchMoreResult.listAllDeliverOrder.doneOrderCounter,
+        allOrderCounter: fetchMoreResult.listAllDeliverOrder.allOrderCounter,
+        creatNewOrderCounter: fetchMoreResult.listAllDeliverOrder.creatNewOrderCounter,
+        inProcessingCounter: fetchMoreResult.listAllDeliverOrder.inProcessingCounter,
+      },
+    };
+  };
+  useEffect(() => {
+    if (allDeliverOrder) {
+      setDeliverOrder(allDeliverOrder?.listAllDeliverOrder?.deliverOrder?.edges?.map((edge) => edge.node));
+      setPageInfo((prevState) => ({
+        ...prevState,
+        hasNextPage: allDeliverOrder?.listAllDeliverOrder?.deliverOrder?.pageInfo.hasNextPage,
+        endCursor: parseInt(allDeliverOrder?.listAllDeliverOrder?.deliverOrder?.pageInfo.endCursor, 10),
+      }));
+      setCountOrder((prevState) => ({
+        ...prevState,
+        allOrderCounter: parseInt(allDeliverOrder.listAllDeliverOrder.allOrderCounter, 10),
+        creatNewOrderCounter: parseInt(allDeliverOrder.listAllDeliverOrder.creatNewOrderCounter, 10),
+        doneOrderCounter: parseInt(allDeliverOrder.listAllDeliverOrder.doneOrderCounter, 10),
+        inProcessingCounter: parseInt(allDeliverOrder.listAllDeliverOrder.inProcessingCounter, 10),
+      }));
+    }
+  }, [allDeliverOrder]);
+
+  const tableEl = useRef();
+  const [loading, setLoading] = useState(false);
+  const [distanceBottom, setDistanceBottom] = useState(0);
+
+  const scrollListener = useCallback(() => {
+    const bottom = tableEl.current?.scrollHeight - tableEl.current?.clientHeight;
+    // if you want to change distanceBottom every time new data is loaded
+    // don't use the if statement
+    if (!distanceBottom) {
+      // calculate distanceBottom that works for you
+      setDistanceBottom(Math.round(bottom * 0.2));
+    }
+
+    if (tableEl.current?.scrollTop > bottom - distanceBottom && pageInfo.hasNextPage && !loading) {
+      setLoading(true);
+      fetchMore({
+        variables: {
+          input: {
+            driverId: filterUserId ? Number(filterUserId) : null,
+            args: {
+              first: rowsPerPage,
+              after: (page + 1) * rowsPerPage,
+            },
+          },
+        },
+        updateQuery: (previousResult, { fetchMoreResult }) => updateQuery(previousResult, { fetchMoreResult }),
+      }).then(() => {
+        setLoading(false);
+        setPage(page + 1);
+      });
+    }
+  }, [setPage, fetchMore, pageInfo.hasNextPage, rowsPerPage, page, filterUserId, loading, distanceBottom]);
+
+  useLayoutEffect(() => {
+    const tableRef = tableEl.current;
+    tableRef?.addEventListener('scroll', scrollListener);
+    return () => {
+      tableRef?.removeEventListener('scroll', scrollListener);
+    };
+  }, [scrollListener]);
+
+  const handleDeleteRows = async (id) => {
+    await deleteDeliverOrders({
+      variables: {
+        input: {
+          ids: [Number(id)],
+          deleteBy: Number(user.id),
+        },
+      },
+    });
+    await refetch();
   };
 
   const handleViewRow = (id) => {
     navigate(PATH_DASHBOARD.saleAndMarketing.view(id));
   };
 
-  const dataFiltered = applySortFilter({
-    tableData,
-    comparator: getComparator(order, orderBy),
-    filterName,
-    filterStatus,
-    filterStartDate,
-    filterEndDate,
-  });
-
   const denseHeight = dense ? 56 : 76;
 
-  const isNotFound =
-    (!dataFiltered.length && !!filterName) ||
-    (!dataFiltered.length && !!filterStatus) ||
-    (!dataFiltered.length && !!filterEndDate) ||
-    (!dataFiltered.length && !!filterStartDate);
-
-  const getLengthByStatus = (status) => tableData.filter((item) => item.status === status).length;
+  const isNotFound = !deliverOrder.length;
 
   const TABS = [
-    { value: AllLabel, label: AllLabel, color: 'info', count: tableData.length },
+    { value: AllLabel, label: AllLabel, color: 'info', count: countOrder.allOrderCounter },
     {
-      value: OrderStatus.newDeliverExport,
+      value: OrderStatus.new,
       label: 'Mới',
       color: 'info',
-      count: getLengthByStatus(OrderStatus.newDeliverExport),
+      count: countOrder.creatNewOrderCounter,
     },
     {
       value: OrderStatus.inProgress,
       label: 'Đang thực hiện',
       color: 'warning',
-      count:
-        getLengthByStatus(OrderStatus.inProgress) +
-        getLengthByStatus(OrderStatus.deliverSuccess) +
-        getLengthByStatus(OrderStatus.paid) +
-        getLengthByStatus(OrderStatus.confirmByAccProcessing),
+      count: countOrder.inProcessingCounter,
     },
     {
       value: OrderStatus.completed,
       label: 'Hoàn thành',
       color: 'success',
-      count: getLengthByStatus(OrderStatus.completed),
+      count: countOrder.doneOrderCounter,
     },
   ];
 
+  const handleOpenEditDialog = (row) => {
+    setIsOpen(true);
+    setSelectedOrder(row);
+  };
+
+  const handleCloseEditDialog = () => {
+    setIsOpen(false);
+    setIsOpenView(false);
+  };
+
+  const handleOpenViewDialog = (row) => {
+    setIsOpen(true);
+    setIsOpenView(true);
+    setSelectedOrder(row);
+  };
+
   return (
     <Page title="Danh sách lệnh xuất hàng">
-      <Container maxWidth={themeStretch ? false : 'lg'}>
+      <Container maxWidth={false}>
         <HeaderBreadcrumbs
           heading="Lệnh xuất hàng"
           links={[
@@ -203,117 +352,67 @@ export default function DeliveryOrderList() {
             ))}
           </Tabs>
 
-          <Divider />
-
-          <OrderTableToolbar
-            filterName={filterName}
-            filterStartDate={filterStartDate}
-            filterEndDate={filterEndDate}
+          <DeliverOrderToolbar
+            handleGetDriverId={handleGetDriverId}
+            filterDrivers={filterDrivers}
+            drivers={listDrivers}
+            onFilterDrivers={handleFilterDriver}
+            handleGetSaleId={handleGetSaleId}
             onFilterName={handleFilterName}
-            onFilterStartDate={(newValue) => {
-              setFilterStartDate(newValue);
-            }}
-            onFilterEndDate={(newValue) => {
-              setFilterEndDate(newValue);
-            }}
-            customSearchStr="Tìm theo mã đơn hàng, khách hàng, số điện thoại..."
+            onFilterSales={handleFilter}
+            filterName={filterName}
+            filterSales={filterSales}
+            sales={listSales}
           />
 
           <Scrollbar>
-            <TableContainer sx={{ minWidth: 800, position: 'relative' }}>
-              {selected.length > 0 && (
-                <TableSelectedActions
-                  dense={dense}
-                  numSelected={selected.length}
-                  rowCount={tableData.length}
-                  onSelectAllRows={(checked) =>
-                    onSelectAllRows(
-                      checked,
-                      tableData.map((row) => row.id)
-                    )
-                  }
-                  actions={
-                    <Stack spacing={1} direction="row">
-                      <Tooltip title="Tải về máy">
-                        <IconButton color="primary">
-                          <Iconify icon={'eva:download-outline'} />
-                        </IconButton>
-                      </Tooltip>
-
-                      <Tooltip title="In">
-                        <IconButton color="primary">
-                          <Iconify icon={'eva:printer-fill'} />
-                        </IconButton>
-                      </Tooltip>
-
-                      <Tooltip title="Xóa">
-                        <IconButton color="primary" onClick={() => handleDeleteRows(selected)}>
-                          <Iconify icon={'eva:trash-2-outline'} />
-                        </IconButton>
-                      </Tooltip>
-                    </Stack>
-                  }
-                />
-              )}
-
-              <Table size={dense ? 'small' : 'medium'}>
-                <TableHeadCustom
-                  order={order}
+            <TableContainer
+              sx={{ minWidth: 800, position: 'relative', minHeight: DefaultMaxHeight, maxHeight: DefaultMaxHeight }}
+              ref={tableEl}
+            >
+              <Table size={'small'}>
+                <TableHeadWithoutCheckBoxCustom
+                  onSort={onSort}
                   orderBy={orderBy}
                   headLabel={TABLE_HEAD}
-                  rowCount={tableData.length}
-                  numSelected={selected.length}
-                  onSort={onSort}
-                  onSelectAllRows={(checked) =>
-                    onSelectAllRows(
-                      checked,
-                      tableData.map((row) => row.id)
-                    )
-                  }
+                  order={order}
                 />
 
                 <TableBody>
-                  {dataFiltered.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => (
+                  {deliverOrder.map((row, idx) => (
                     <DeliveryOrderTableRow
-                      key={row.id}
+                      key={idx}
                       row={row}
-                      selected={selected.includes(row.id)}
-                      onSelectRow={() => onSelectRow(row.id)}
-                      onViewRow={() => handleViewRow(row.id)}
-                      onDeleteRow={() => handleDeleteRow(row.id)}
+                      idx={idx}
+                      onViewRow={() => handleViewRow(row?.order?.id)}
+                      onEditRow={handleOpenEditDialog}
+                      driverViewRow={handleOpenViewDialog}
+                      onDeleteRow={() => handleDeleteRows(row?.id)}
                     />
                   ))}
 
-                  <TableEmptyRows height={denseHeight} emptyRows={emptyRows(page, rowsPerPage, tableData.length)} />
+                  <TableEmptyRows
+                    height={denseHeight}
+                    emptyRows={tableEmptyRows(page, rowsPerPage, deliverOrder.length)}
+                  />
 
                   <TableNoData isNotFound={isNotFound} />
                 </TableBody>
               </Table>
             </TableContainer>
           </Scrollbar>
-
-          <Box sx={{ position: 'relative' }}>
-            <TablePagination
-              rowsPerPageOptions={[5, 10, 25]}
-              component="div"
-              count={dataFiltered.length}
-              rowsPerPage={rowsPerPage}
-              page={page}
-              onPageChange={onChangePage}
-              onRowsPerPageChange={onChangeRowsPerPage}
-              labelRowsPerPage="Số lượng trên trang"
-              labelDisplayedRows={(from = page) =>
-                `${from.from}-${from.to === -1 ? from.count : from.to}/${from.count}`
-              }
-            />
-
-            <FormControlLabel
-              control={<Switch checked={dense} onChange={onChangeDense} />}
-              label="Thu gọn bảng"
-              sx={{ px: 3, py: 1.5, top: 0, position: { md: 'absolute' } }}
-            />
-          </Box>
         </Card>
+        <CommonBackdrop loading={loadingDeliverOrder || loading || loadingDelete} />
+
+        {selectedOrder !== undefined && (
+          <EditOrderDialog
+            onClose={handleCloseEditDialog}
+            isOpen={isOpen}
+            row={selectedOrder}
+            refetchData={refetch}
+            isOpenView={isOpenView}
+          />
+        )}
       </Container>
     </Page>
   );
@@ -321,45 +420,6 @@ export default function DeliveryOrderList() {
 
 // ----------------------------------------------------------------------
 
-function applySortFilter({ tableData, comparator, filterName, filterStatus, filterStartDate, filterEndDate }) {
-  const stabilizedThis = tableData.map((el, index) => [el, index]);
-
-  stabilizedThis.sort((a, b) => {
-    const order = comparator(a[0], b[0]);
-    if (order !== 0) return order;
-    return a[1] - b[1];
-  });
-
-  tableData = stabilizedThis.map((el) => el[0]);
-
-  if (filterName) {
-    tableData = tableData.filter(
-      (item) =>
-        item.invoiceNumber.toLowerCase().indexOf(filterName.toLowerCase()) !== -1 ||
-        item.customer.name.toLowerCase().indexOf(filterName.toLowerCase()) !== -1
-    );
-  }
-
-  if (filterStatus !== AllLabel) {
-    if (filterStatus === OrderStatus.inProgress) {
-      tableData = tableData.filter(
-        (item) =>
-          item.status === OrderStatus.inProgress ||
-          item.status === OrderStatus.paid ||
-          item.status === OrderStatus.confirmByAccProcessing ||
-          item.status === OrderStatus.deliverSuccess
-      );
-    } else {
-      tableData = tableData.filter((item) => item.status === filterStatus);
-    }
-  }
-
-  if (filterStartDate && filterEndDate) {
-    tableData = tableData.filter(
-      (item) =>
-        item.createDate.getTime() >= filterStartDate.getTime() && item.createDate.getTime() <= filterEndDate.getTime()
-    );
-  }
-
-  return tableData;
+function tableEmptyRows(page, rowsPerPage, arrayLength) {
+  return page > 0 ? Math.max(0, rowsPerPage - arrayLength) : 0;
 }

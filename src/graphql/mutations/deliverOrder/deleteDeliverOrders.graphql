@@ -1,0 +1,3 @@
+mutation DeleteDeliverOrders($input: DeleteDeliverOrdersInput!) {
+    deleteDeliverOrders(input: $input)
+}

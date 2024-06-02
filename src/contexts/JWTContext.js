@@ -89,7 +89,7 @@ function AuthProvider({ children }) {
         if (accessToken && isValidToken(accessToken)) {
           setSession(accessToken);
           const fetchedData = await fetchProfile();
-          const user = fetchedData.me ?? fetchedData.data.me;
+          const user = fetchedData?.me ?? fetchedData.data?.me;
           const currentUser = {
             ...user,
             id: `${user?.id}`,

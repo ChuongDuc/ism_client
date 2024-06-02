@@ -1,81 +1,143 @@
-// noinspection DuplicatedCode,JSUnresolvedFunction
+// noinspection DuplicatedCode
 
 import PropTypes from 'prop-types';
-import * as Yup from 'yup';
 import { useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { yupResolver } from '@hookform/resolvers/yup';
-import { LoadingButton } from '@mui/lab';
-import { Card, Stack } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
+import { Card } from '@mui/material';
+import { loader } from 'graphql.macro';
+import { useMutation, useQuery } from '@apollo/client';
 import { useSnackbar } from 'notistack';
 import { FormProvider } from '../../../../../../components/hook-form';
-import QuotationNewEditDetails from './QuotationNewEditDetails';
-import { customerPropTypes } from '../../../../../../constant';
-import { PATH_DASHBOARD } from '../../../../../../routes/paths';
+import MultipleItemGroupQuotation from '../MultipleItemGroupQuotation';
+import { convertStringToNumber } from '../../../../../../utils/formatNumber';
+import NewEditDetailsQuotationForm from '../../../../../../pages/dashboard/NewEditDetailsQuotationForm';
 
+const UPDATE_QUOTATION = loader('../../../../../../graphql/mutations/order/updatePriceQuotation.graphql');
+const LIST_CUSTOMER = loader('../../../../../../graphql/queries/customer/listAllCustomer.graphql');
+const ORDER_BY_ID = loader('../../../../../../graphql/queries/order/getOrderById.graphql');
 // ----------------------------------------------------------------------
 
 QuotationNewEditForm.propTypes = {
   isEdit: PropTypes.bool,
-  customer: customerPropTypes().isRequired,
+  customer: PropTypes.object.isRequired,
   freightPrice: PropTypes.number,
   currentProducts: PropTypes.arrayOf(
     PropTypes.shape({
-      cover: PropTypes.string,
-      id: PropTypes.string,
-      images: PropTypes.arrayOf(PropTypes.string),
-      name: PropTypes.string,
-      code: PropTypes.string,
-      sku: PropTypes.string,
-      tags: PropTypes.arrayOf(PropTypes.string),
+      priceProduct: PropTypes.number,
       quantity: PropTypes.number,
-      price: PropTypes.number,
-      weight: PropTypes.number,
-      priceSale: PropTypes.number,
-      totalRating: PropTypes.number,
-      totalReview: PropTypes.number,
-      inventoryType: PropTypes.string,
-      sizes: PropTypes.string,
-      available: PropTypes.number,
-      description: PropTypes.string,
-      sold: PropTypes.number,
-      category: PropTypes.string,
-      createdAt: PropTypes.instanceOf(Date),
+      updatedAt: PropTypes.instanceOf(Date),
+      product: PropTypes.shape({
+        id: PropTypes.number,
+        name: PropTypes.string,
+        available: PropTypes.number,
+      }),
     })
   ),
+  currentCategories: PropTypes.array,
+  order: PropTypes.object,
+  isMultiCategories: PropTypes.bool,
+  setFormMethod: PropTypes.func,
+  handleDeniedEdit: PropTypes.func,
 };
 
-export default function QuotationNewEditForm({ isEdit, customer, currentProducts, freightPrice }) {
-  const navigate = useNavigate();
-  const [loadingSend, setLoadingSend] = useState(false);
+export default function QuotationNewEditForm({
+  isEdit,
+  currentProducts,
+  currentCategories,
+  freightPrice,
+  isMultiCategories,
+  order,
+  setFormMethod,
+  handleDeniedEdit,
+}) {
   const { enqueueSnackbar } = useSnackbar();
-  const NewQuotationSchema = Yup.object().shape({});
+  const {
+    VAT,
+    // freightMessage,
+    reportingValidityAmount,
+    deliveryMethodDescription,
+    percentOfAdvancePayment,
+    executionTimeDescription,
+    deliverAddress,
+    customer,
+    // status,
+    // invoiceNo,
+    id,
+    // totalMoney,
+    // remainingPaymentMoney,
+    // cranesNote,
+    // receivingNote,
+    // documentNote,
+    // otherNote,
+    sale,
+    itemGroupList,
+    shippingTax,
+    // deliverOrderList,
+    // paymentList
+  } = order;
+
+  console.log(order, 'order');
+
+  const [customers, setCustomer] = useState([]);
+
+  const { data: allCustomer } = useQuery(LIST_CUSTOMER, {
+    variables: {
+      input: {},
+    },
+  });
+
+  useEffect(() => {
+    if (allCustomer) {
+      setCustomer(allCustomer?.listAllCustomer?.edges.map((edge) => edge.node));
+    }
+  }, [allCustomer]);
+
+  const [updateQuotation] = useMutation(UPDATE_QUOTATION, {
+    onCompleted: async (res) => {
+      if (res) {
+        return res;
+      }
+      return null;
+    },
+    refetchQueries: () => [
+      {
+        query: ORDER_BY_ID,
+        variables: {
+          orderId: Number(id),
+        },
+      },
+    ],
+  });
 
   const defaultValues = useMemo(
     () => ({
       products: currentProducts || [],
       customer: customer || null,
       freightPrice: freightPrice || 0,
-      freightMessage: '',
+      freightMessage: deliverAddress || '',
+      categories: currentCategories || [],
+      deliveryMethod: deliveryMethodDescription || '',
+      vat: VAT || 10,
+      shippingTax: shippingTax || 8,
+      reportingValidity: reportingValidityAmount || 3,
+      executionTime: executionTimeDescription || '',
+      pay: percentOfAdvancePayment || 100,
+      deliverAddress: deliverAddress || '',
+      companyAddress: customer?.company?.address || '',
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [currentProducts]
   );
 
   const methods = useForm({
-    resolver: yupResolver(NewQuotationSchema),
     defaultValues,
   });
 
-  const {
-    reset,
-    watch,
-    handleSubmit,
-    formState: { isSubmitting },
-  } = methods;
+  const { watch, reset, setValue } = methods;
 
   const values = watch();
+
+  const customerOrder = customers.filter((data) => data?.id === values?.customer?.id);
 
   useEffect(() => {
     if (isEdit && currentProducts) {
@@ -87,45 +149,167 @@ export default function QuotationNewEditForm({ isEdit, customer, currentProducts
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isEdit, currentProducts]);
 
-  const newQuotationProducts = {
-    ...values,
-    items: values.products.map((item) => ({
-      ...item,
-      total: item.quantity * item.price,
-    })),
+  useEffect(() => {
+    if (isEdit) {
+      setFormMethod(methods);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isEdit]);
+
+  const multiCategoryOrder = values.categories?.map((item) => ({
+    orderDetails: item.orderDetailList,
+    itemGroupId: item.id,
+    description: item.description,
+    name: item.name,
+  }));
+
+  const singleCategoryOrder = values.products?.map((item) => ({
+    productId: item?.product?.id,
+    orderDetailId: item?.id,
+    quantity: item.quantity,
+    priceProduct: item.priceProduct,
+    description: item.description,
+    weightProduct: item.weightProduct,
+  }));
+
+  const updateSingleQuote = async (orderId, saleId, categoryOrder, data) => {
+    const response = await updateQuotation({
+      variables: {
+        input: {
+          orderId: Number(orderId),
+          saleId: Number(saleId),
+          deliverAddress: data?.deliverAddress,
+          deliveryMethodDescription: data?.deliveryMethod,
+          executionTimeDescription: data?.executionTime,
+          freightMessage: data?.deliverAddress,
+          freightPrice: convertStringToNumber(data?.freightPrice),
+          percentOfAdvancePayment: Number(data?.pay),
+          reportingValidityAmount: Number(data?.reportingValidity),
+          vat: Number(data?.vat),
+          itemGroups: [
+            {
+              itemGroupId: Number(itemGroupList[0]?.id),
+              orderDetails: categoryOrder?.map((item) => ({
+                orderDetailId: Number(item?.orderDetailId),
+                productId: Number(item.productId),
+                quantity: Number(item.quantity),
+                priceProduct: convertStringToNumber(item.priceProduct),
+                description: item.description,
+                weightProduct: Number(item.weightProduct),
+              })),
+            },
+          ],
+        },
+      },
+      onError: (error) => {
+        enqueueSnackbar(`Cập nhật báo giá không thành công. Nguyên nhân: ${error.message}`, {
+          variant: 'error',
+        });
+      },
+    });
+    if (!response.errors) {
+      enqueueSnackbar('Cập nhật báo giá thành công', {
+        variant: 'success',
+      });
+    }
   };
 
-  const handleCreateAndSend = async () => {
-    setLoadingSend(true);
-
+  const updateMultiQuote = async (orderId, saleId, categoryOrder, data) => {
+    const response = await updateQuotation({
+      variables: {
+        input: {
+          orderId: Number(orderId),
+          saleId: Number(saleId),
+          deliverAddress: data?.deliverAddress,
+          deliveryMethodDescription: data?.deliveryMethod,
+          executionTimeDescription: data?.executionTime,
+          freightMessage: data?.deliverAddress,
+          freightPrice: convertStringToNumber(data?.freightPrice),
+          percentOfAdvancePayment: Number(data?.pay),
+          reportingValidityAmount: Number(data?.reportingValidity),
+          vat: Number(data?.vat),
+          itemGroups: categoryOrder?.map((item) => ({
+            description: item?.description,
+            name: item?.name,
+            itemGroupId: Number(item?.itemGroupId),
+            orderDetails: item.orderDetails.map((orderDetailsList) => ({
+              orderDetailId: Number(orderDetailsList?.id),
+              productId: Number(orderDetailsList?.product.id),
+              quantity: Number(orderDetailsList.quantity),
+              priceProduct: convertStringToNumber(orderDetailsList.priceProduct),
+              description: orderDetailsList.description,
+              weightProduct: Number(orderDetailsList.weightProduct),
+            })),
+          })),
+        },
+      },
+      onError: (error) => {
+        enqueueSnackbar(`Cập nhật báo giá không thành công. Nguyên nhân: ${error.message}`, {
+          variant: 'error',
+        });
+      },
+    });
+    if (!response.errors) {
+      enqueueSnackbar('Cập nhật báo giá thành công', {
+        variant: 'success',
+      });
+    }
+  };
+  const onSubmit = async (data) => {
+    console.log(data);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      reset();
-      setLoadingSend(false);
-      enqueueSnackbar('Tạo báo giá thành công!', { variant: 'success' });
-      navigate(PATH_DASHBOARD.saleAndMarketing.demoView);
-      console.log(JSON.stringify(newQuotationProducts, null, 2));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      if (isMultiCategories) {
+        await updateMultiQuote(id, sale?.id, multiCategoryOrder, data);
+      } else {
+        await updateSingleQuote(id, sale?.id, singleCategoryOrder, data);
+      }
+      handleDeniedEdit();
     } catch (error) {
       console.error(error);
     }
   };
 
+  // Cập nhật thông tin địa chỉ giao hàng mỗi khi thay đổi khách hàng
+  useEffect(() => {
+    if (values.customer?.address) {
+      setValue('deliverAddress', values.customer?.address ?? '');
+    }
+  }, [setValue, values.customer]);
+  // Khi check vào miễn phí vận chuyển thì phí giao hàng chuyển về 0
+  useEffect(() => {
+    if (values.isFree === true) {
+      setValue('freightPrice', 0);
+    }
+  }, [setValue, values.isFree]);
+
+  useEffect(() => {
+    setValue('freightMessage', values.deliverAddress);
+  }, [setValue, values.deliverAddress]);
+
   return (
     <FormProvider methods={methods}>
-      <Card>
-        <QuotationNewEditDetails />
-      </Card>
-
-      <Stack justifyContent="flex-end" direction="row" spacing={2} sx={{ mt: 3, mb: 3, mr: 3 }}>
-        <LoadingButton
-          size="large"
-          variant="contained"
-          loading={loadingSend && isSubmitting}
-          onClick={handleSubmit(handleCreateAndSend)}
-        >
-          {isEdit ? 'Cập nhật' : 'Tạo mới'} & Gửi
-        </LoadingButton>
-      </Stack>
+      {isMultiCategories ? (
+        <Card>
+          <MultipleItemGroupQuotation
+            isEdit={isEdit}
+            onOpenPreview={null}
+            customerOrder={customerOrder}
+            handleSend={onSubmit}
+            isAdd={false}
+          />
+        </Card>
+      ) : (
+        <Card>
+          <NewEditDetailsQuotationForm
+            isEdit={isEdit}
+            onOpenPreview={null}
+            customerOrder={customerOrder}
+            handleSend={onSubmit}
+            isAdd={false}
+          />
+        </Card>
+      )}
     </FormProvider>
   );
 }

@@ -1,0 +1,3 @@
+mutation UpdateStatusOrderOfAccountant($input: UpdateStatusOrderOfAccountantInput!){
+    updateStatusOrderOfAccountant(input: $input)
+}

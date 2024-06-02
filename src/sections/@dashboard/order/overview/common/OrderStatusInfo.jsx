@@ -1,61 +1,84 @@
 // noinspection DuplicatedCode
 
-import { Card, Divider, Stack, Typography } from '@mui/material';
+import { Card, Stack, Typography, Grid } from '@mui/material';
+import PropTypes from 'prop-types';
 import { fVietNamCurrency } from '../../../../../utils/formatNumber';
-import { orderPropTypes, OrderStatus } from '../../../../../constant';
+import { OrderStatus } from '../../../../../constant';
+import { formatStatus } from '../../../../../utils/getOrderFormat';
 
 // ----------------------------------------------------------------------
 
 OrderStatusInfo.propTypes = {
-  order: orderPropTypes().isRequired,
+  order: PropTypes.object.isRequired,
 };
 
 export default function OrderStatusInfo({ order }) {
-  const { status, products, freightPrice } = order;
-  let totalP = products
-    ? products.reduce(
-        (total, data) =>
-          data?.price && data?.weight && Number(data?.price) > 0 && Number(data?.weight) > 0
-            ? total + Number(data?.price) * Number(data?.weight) * Number(data?.quantity)
-            : total + 0,
-        0
-      )
-    : 0;
-  totalP = freightPrice ? totalP + freightPrice : totalP;
-
+  const { status, totalMoney } = order;
   return (
     <Card sx={{ py: 3 }}>
-      <Stack direction="row" divider={<Divider orientation="vertical" flexItem />}>
-        <Stack width={1} textAlign="center">
-          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-            Trạng thái đơn hàng
-          </Typography>
-          <Typography
-            variant="h4"
-            color={
-              (status === OrderStatus.new && 'info.main') ||
-              (status === OrderStatus.quotationAndDeal && 'info.main') ||
-              (status === OrderStatus.newDeliverExport && 'success.main') ||
-              (status === OrderStatus.inProgress && 'info.main') ||
-              (status === OrderStatus.deliverSuccess && 'success.main') ||
-              (status === OrderStatus.unpaid && 'warning.main') ||
-              (status === OrderStatus.overdue && 'error.main') ||
-              (status === OrderStatus.paid && 'success.main') ||
-              (status === OrderStatus.confirmByAccProcessing && 'warning.main') ||
-              (status === OrderStatus.completed && 'success.main')
-            }
-          >
-            {status}
-          </Typography>
-        </Stack>
+      <Grid container spacing={2}>
+        <Grid item xs={6} sm={6} lg={3}>
+          <Stack textAlign="center" spacing={0.3}>
+            <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>
+              Trạng thái đơn hàng
+            </Typography>
+            <Typography
+              variant="subtitle1"
+              color={
+                (formatStatus(status) === OrderStatus.new && 'info.main') ||
+                (formatStatus(status) === OrderStatus.quotationAndDeal && 'info.main') ||
+                (formatStatus(status) === OrderStatus.newDeliverExport && 'success.main') ||
+                (formatStatus(status) === OrderStatus.inProgress && 'info.main') ||
+                (formatStatus(status) === OrderStatus.deliverSuccess && 'success.main') ||
+                (formatStatus(status) === OrderStatus.paid && 'success.main') ||
+                (formatStatus(status) === OrderStatus.confirmByAccProcessing && 'warning.main') ||
+                (formatStatus(status) === OrderStatus.completed && 'success.main')
+              }
+            >
+              {formatStatus(status)}
+            </Typography>
+          </Stack>
+        </Grid>
 
-        <Stack width={1} textAlign="center">
-          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-            Tổng đơn hàng
-          </Typography>
-          <Typography variant="h4">{`${fVietNamCurrency(totalP)} VNĐ`}</Typography>
-        </Stack>
-      </Stack>
+        <Grid item xs={6} sm={6} lg={3}>
+          <Stack textAlign="center" spacing={0.3}>
+            <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>
+              Tổng đơn hàng
+            </Typography>
+            <Typography variant="subtitle1">{`${fVietNamCurrency(totalMoney)} VNĐ`}</Typography>
+          </Stack>
+        </Grid>
+
+        <Grid item xs={6} sm={6} lg={3}>
+          {order?.sale !== null && (
+            <Stack textAlign="center" spacing={0.3}>
+              <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>
+                Nhân viên kinh doanh
+              </Typography>
+              <Typography variant="subtitle1">{order?.sale?.fullName}</Typography>
+              <Typography variant="subtitle1">{order?.sale?.phoneNumber}</Typography>
+            </Stack>
+          )}
+        </Grid>
+
+        <Grid item xs={6} sm={6} lg={3}>
+          {order?.deliverOrderList?.driver !== null && (
+            <Stack textAlign="center" spacing={0.3}>
+              <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>
+                Nhân viên lái xe
+              </Typography>
+              {order?.deliverOrderList.map((data, index) => (
+                <div key={index}>
+                  <Typography variant="subtitle1">{data.driver?.fullName}</Typography>
+                  <Typography variant="subtitle1">{data.driver?.phoneNumber}</Typography>
+                </div>
+              ))}
+              <Typography variant="subtitle1">{order?.deliverOrderList?.driver?.fullName}</Typography>
+              <Typography variant="subtitle1">{order?.deliverOrderList?.driver?.phoneNumber}</Typography>
+            </Stack>
+          )}
+        </Grid>
+      </Grid>
     </Card>
   );
 }

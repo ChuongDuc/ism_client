@@ -1,4 +1,5 @@
 import {
+  accountantNavConfig,
   adminNavConfig,
   directorNavConfig,
   driverNavConfig,
@@ -15,6 +16,8 @@ const navConfig = (user) => {
       return adminNavConfig;
     case Role.director:
       return directorNavConfig;
+    case Role.accountant:
+      return accountantNavConfig;
     case Role.sales:
       return salesNavConfig;
     case Role.transporterManager:

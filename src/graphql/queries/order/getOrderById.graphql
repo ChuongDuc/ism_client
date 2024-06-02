@@ -20,15 +20,15 @@ query GetOrderById($orderId: Int!) {
     invoiceNo
     VAT
     status
-#    driver {
-#      id
-#      role
-#      email
-#      address
-#      phoneNumber
-#      fullName
-#      userName
-#    }
+    driver {
+      id
+      role
+      email
+      address
+      phoneNumber
+      fullName
+      userName
+    }
     freightPrice
     deliverAddress
     itemGroupList {
@@ -75,6 +75,12 @@ query GetOrderById($orderId: Int!) {
         phoneNumber
       }
     }
+    deliveryMethodDescription
+    executionTimeDescription
+    percentOfAdvancePayment
+    reportingValidityAmount
+    discount
+    freightMessage
     totalMoney
     remainingPaymentMoney
     createdAt

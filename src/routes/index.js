@@ -156,7 +156,7 @@ export default function Router() {
               index: true,
             },
             { path: 'danh-sach', element: <OrderList /> },
-            { path: 'tao-moi', element: <OrderCreate /> },
+            { path: 'tao-moi', element: <CreateNewQuotationVer2 /> },
             { path: ':id', element: <InvoiceDetails /> },
             { path: ':id/cap-nhat', element: <InvoiceEdit /> },
           ],
@@ -308,3 +308,5 @@ const Inventory = Loadable(lazy(() => import('../pages/dashboard/Inventory')));
 // PRICE LIST
 const GeneralPriceList = Loadable(lazy(() => import('../pages/dashboard/GeneralPriceList')));
 const PriceList = Loadable(lazy(() => import('../sections/@dashboard/e-commerce/price-list/PriceList')));
+
+const CreateNewQuotationVer2 = Loadable(lazy(() => import('../pages/dashboard/CreateNewQuotationVer2')));

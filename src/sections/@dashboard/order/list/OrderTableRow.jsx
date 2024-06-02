@@ -70,7 +70,7 @@ export default function OrderTableRow({ row, selected, idx, onViewRow, onDeleteR
         <Tooltip placement="top" title={customer?.company ?? 'Chưa có thông tin cty'}>
           <TableCell align="left">
             <TextMaxLine variant={'subtitle2'} line={1} persistent>
-              {customer?.company ?? '-'}
+              {customer?.company || '-'}
             </TextMaxLine>
           </TableCell>
         </Tooltip>

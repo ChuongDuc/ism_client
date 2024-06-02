@@ -1,0 +1,3 @@
+mutation UpdateDeliverOrder($input: UpdateDeliverOrderInput!) {
+    updateDeliverOrder(input: $input)
+}

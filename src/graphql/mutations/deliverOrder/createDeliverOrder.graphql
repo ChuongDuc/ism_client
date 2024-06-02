@@ -1,0 +1,25 @@
+mutation CreateDeliverOrder($input: CreateDeliverOrderInput!) {
+  createDeliverOrder(input: $input) {
+    id
+    customer {
+      id
+      name
+    }
+    order {
+      id
+      invoiceNo
+    }
+    driver {
+      id
+      email
+      userName
+    }
+    deliveryDate
+    cranesNote
+    receivingNote
+    documentNote
+    description
+    createdAt
+    updatedAt
+  }
+}

@@ -1,27 +1,32 @@
 import PropTypes from 'prop-types';
 import { useState } from 'react';
-import { useTheme } from '@mui/material/styles';
 import { Checkbox, MenuItem, TableCell, TableRow, Typography } from '@mui/material';
-import Label from '../Label';
-import { fddMMYYYYWithSlash } from '../../utils/formatTime';
 import { fVietNamCurrency } from '../../utils/formatNumber';
 import { TableMoreMenu } from '../table';
 import Iconify from '../Iconify';
-import Image from '../Image';
 
 // ----------------------------------------------------------------------
 
 ProductDialogTableRow.propTypes = {
+  idx: PropTypes.number,
   row: PropTypes.object,
   selected: PropTypes.bool,
   onAddSingleRow: PropTypes.func,
   onSelectRow: PropTypes.func,
+  selectRow: PropTypes.func,
+  onEditRow: PropTypes.func,
 };
 
-export default function ProductDialogTableRow({ row, selected, onAddSingleRow, onSelectRow }) {
-  const theme = useTheme();
-
-  const { name, cover, createdAt, inventoryType, price } = row;
+export default function ProductDialogTableRow({
+  row,
+  idx,
+  selected,
+  onAddSingleRow,
+  onSelectRow,
+  selectRow,
+  onEditRow,
+}) {
+  const { name, height, weight, priceWithVAT, priceWithoutVAT } = row;
 
   const [openMenu, setOpenMenuActions] = useState(null);
 
@@ -34,32 +39,28 @@ export default function ProductDialogTableRow({ row, selected, onAddSingleRow, o
   };
 
   return (
-    <TableRow hover selected={selected}>
+    <TableRow hover selected={selected} onDoubleClick={selectRow}>
       <TableCell padding="checkbox">
-        <Checkbox checked={selected} onClick={onSelectRow} />
+        <Checkbox checked={selected} onClick={onSelectRow} size="small" />
       </TableCell>
-
+      <TableCell align="left">{idx + 1}</TableCell>
       <TableCell sx={{ display: 'flex', alignItems: 'center' }}>
-        <Image disabledEffect alt={name} src={cover} sx={{ borderRadius: 1.5, width: 48, height: 48, mr: 2 }} />
         <Typography variant="subtitle2" noWrap>
           {name}
         </Typography>
       </TableCell>
 
-      <TableCell>{fddMMYYYYWithSlash(createdAt)}</TableCell>
+      <TableCell>{height}</TableCell>
 
-      <TableCell align="center">
-        <Label
-          variant={theme.palette.mode === 'light' ? 'ghost' : 'filled'}
-          color={(inventoryType === 'Hết hàng' && 'error') || 'success'}
-          sx={{ textTransform: 'capitalize' }}
-        >
-          {inventoryType}
-        </Label>
-      </TableCell>
+      <TableCell>{weight}</TableCell>
 
-      <TableCell align="right">{`${fVietNamCurrency(price)} VNĐ`}</TableCell>
+      <TableCell align="left">{fVietNamCurrency(priceWithoutVAT)}</TableCell>
 
+      <TableCell align="left">{fVietNamCurrency(Number(priceWithoutVAT) * Number(weight))}</TableCell>
+
+      <TableCell align="left">{fVietNamCurrency(priceWithVAT)} </TableCell>
+
+      <TableCell align="left">{fVietNamCurrency(Number(priceWithVAT) * Number(weight))}</TableCell>
       <TableCell align="right">
         <TableMoreMenu
           open={openMenu}
@@ -75,6 +76,15 @@ export default function ProductDialogTableRow({ row, selected, onAddSingleRow, o
               >
                 <Iconify icon={'eva:edit-fill'} />
                 Thêm SP
+              </MenuItem>
+              <MenuItem
+                onClick={() => {
+                  onEditRow();
+                  handleCloseMenu();
+                }}
+              >
+                <Iconify icon={'eva:edit-fill'} />
+                Sửa
               </MenuItem>
             </>
           }

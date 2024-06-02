@@ -42,9 +42,11 @@ type DeliverOrder {
     customer: Customer!
     deliveryDate: Date!
     description: String
+    documentNote: String
     driver: User
     id: Int!
     order: Order!
+    otherNote: String
     receivingNote: String
     updatedAt: Date
 }
@@ -104,6 +106,7 @@ type ItemGroup {
     createdAt: Date
     description: String
     id: Int!
+    name: String
     orderDetailList: [OrderDetail!]
     updatedAt: Date
 }
@@ -121,12 +124,14 @@ type Mutation {
     createCustomer(input: CreateCustomerInput!): Customer!
     createDeliverOrder(input: CreateDeliverOrderInput!): DeliverOrder!
     createOrder(input: CreateOrderInput!): Order!
+    createPaymentInfor(input: CreatePaymentInforInput!): SuccessResponse!
     createPriceQuotation(input: CreatePriceQuotationInput!): [ItemGroup]!
     createProduct(input: CreateProductInput!): Product!
     createUser(input: CreateUserInput!): User!
     deleteCustomer(input: DeleteCustomerInput!): SuccessResponse!
     deleteDeliverOrders(input: DeleteDeliverOrdersInput!): SuccessResponse!
     deleteOrder(input: DeleteOrderInput!): SuccessResponse!
+    deletePaymentInfor(input: DeletePaymentInforInput!): SuccessResponse!
     deleteProductById(input: DeleteProductByIdInput!): SuccessResponse!
     deleteUser(input: DeleteUserInput!): SuccessResponse!
     importFileExcelInventory(input: ImportFileExcelInventoryInput!): [Inventory]!
@@ -136,9 +141,12 @@ type Mutation {
     updateCustomer(input: UpdateCustomerInput!): SuccessResponse!
     updateDeliverOrder(input: UpdateDeliverOrderInput!): SuccessResponse!
     updateOrder(input: UpdateOrderInput!): SuccessResponse!
+    updatePaymentInfor(input: UpdatePaymentInforInput!): SuccessResponse!
     updatePriceQuotation(input: UpdatePriceQuotationInput!): SuccessResponse!
     updateProductById(input: UpdateProductByIdInput!): SuccessResponse!
     updateProductPriceById(input: UpdateProductPriceByIdInput!): SuccessResponse!
+    updateStatusOrderForDriver(input: UpdateStatusOrderForDriverInput!): SuccessResponse!
+    updateStatusOrderOfAccountant(input: UpdateStatusOrderOfAccountantInput!): SuccessResponse!
     updateStatusUserNotification(input: UpdateStatusUserNotificationInput!): SuccessResponse!
     updateUser(input: UpdateUserInput!): SuccessResponse!
 }
@@ -164,12 +172,19 @@ type Order {
     customer: Customer!
     deliverAddress: String
     deliverOrderList: [DeliverOrder]
+    deliveryMethodDescription: String
+    discount: Float
+    driver: User
+    executionTimeDescription: String
+    freightMessage: String
     freightPrice: Float
     id: Int!
     invoiceNo: String!
     itemGroupList: [ItemGroup]
-    paymentList: [PaymentInfo]
+    paymentList: [PaymentInfor]
+    percentOfAdvancePayment: Float
     remainingPaymentMoney: Float
+    reportingValidityAmount: Int
     sale: User!
     status: StatusOrder
     totalMoney: Float
@@ -184,9 +199,11 @@ type OrderConnection {
 
 type OrderDetail {
     createdAt: Date
+    deliveryMethodNote: String
     description: String
     id: Int!
     itemGroup: ItemGroup!
+    otherNote: String
     priceProduct: Float!
     product: Product!
     quantity: Float!
@@ -205,7 +222,7 @@ type PageInfo {
     hasNextPage: Boolean!
 }
 
-type PaymentInfo {
+type PaymentInfor {
     createdAt: Date
     customer: Customer!
     description: String
@@ -216,14 +233,20 @@ type PaymentInfo {
 }
 
 type Product {
+    available: Float
     category: Category!
     code: String
     createdAt: Date
     description: String
+    formType: FormType
     height: Float!
     id: Int!
     name: String!
     price: Float!
+    priceWithVAT: Float!
+    priceWithoutVAT: Float!
+    subCategory: String
+    type: TypeProduct!
     unit: Unit
     updatedAt: Date
     weight: Float!
@@ -314,11 +337,24 @@ type UserNotificationEdge {
     node: UserNotification
 }
 
+enum FormType {
+    VAT
+    tonnage
+}
+
 enum NotificationEvent {
     Common
+    DeliverResolverDelete
+    DeliverResolverUpdated
+    NewCustomer
+    NewDeliverResolver
     NewMessage
     NewOrder
+    NewProduct
     OrderStatusChanged
+    Payment
+    PaymentChanged
+    ProductUpdated
 }
 
 enum Role {
@@ -345,6 +381,11 @@ enum StatusOrder {
 
 enum SuccessResponse {
     success
+}
+
+enum TypeProduct {
+    plate
+    shape
 }
 
 enum Unit {
@@ -391,33 +432,50 @@ input CreateDeliverOrderInput {
     customerId: Int!
     deliveryDate: Date!
     description: String
+    documentNote: String
     driverId: Int
     itemGroupsNotes: [ItemGroupsNoteInput!]
     orderId: Int!
+    otherNote: String
     receivingNote: String
 }
 
 input CreateOrderInput {
     VAT: Float
     customerId: Int!
-    saleUserId: Int!
+    discount: Float
+    saleId: Int!
+}
+
+input CreatePaymentInforInput {
+    createById: Int!
+    customerId: Int!
+    description: String
+    money: Float!
+    orderId: Int!
 }
 
 input CreatePriceQuotationInput {
     categoryOrders: [CategoryOrderInput!]!
     deliverAddress: String
+    deliveryMethodDescription: String
+    executionTimeDescription: String
+    freightMessage: String
     freightPrice: Float
     orderId: Int!
+    percentOfAdvancePayment: Float
+    reportingValidityAmount: Int
+    saleId: Int!
     vat: Float
 }
 
 input CreateProductInput {
     categoryId: Int!
-    code: String
-    description: String
     height: Float!
-    price: Float!
+    priceWithVAT: Float!
+    priceWithoutVAT: Float!
     productName: String!
+    productType: TypeProduct!
     unit: Unit
     weight: Float!
 }
@@ -445,6 +503,11 @@ input DeleteDeliverOrdersInput {
 
 input DeleteOrderInput {
     orderId: Int!
+}
+
+input DeletePaymentInforInput {
+    deleteBy: Int!
+    ids: [Int!]!
 }
 
 input DeleteProductByIdInput {
@@ -476,6 +539,7 @@ input ImportFileExcelProductsInput {
 input ItemGroupsInput {
     description: String
     itemGroupId: Int
+    name: String
     orderDetails: [UpdateProductInput!]
 }
 
@@ -506,6 +570,7 @@ input ListAllProductsInput {
     args: PaginationInput
     category: Int
     name: String
+    typeProduct: TypeProduct
     unit: Unit
 }
 
@@ -567,25 +632,53 @@ input UpdateDeliverOrderInput {
     deliverOrderId: Int!
     deliveryDate: Date
     description: String
+    documentNote: String
     driverId: Int
     itemGroupsNotes: [ItemGroupsNoteInput!]
+    otherNote: String
+    receivingNote: String
+}
+
+input UpdateDeliverOrderNoteInput {
+    cranesNote: String
+    deliverOrderId: Int!
+    documentNote: String
+    name: String
+    otherNote: String
+    receiver: String
+    receiverPhoneNumber: String
     receivingNote: String
 }
 
 input UpdateOrderInput {
     VAT: Float
     customerId: Int
-    driverUserId: Int
+    discount: Float
+    driver: Int
     orderId: Int!
-    saleUserId: Int
+    saleId: Int
     status: StatusOrder
+}
+
+input UpdatePaymentInforInput {
+    customerId: Int
+    description: String
+    id: Int!
+    money: Float
+    orderId: Int
+    userId: Int!
 }
 
 input UpdatePriceQuotationInput {
     deliverAddress: String
+    deliveryMethodDescription: String
+    executionTimeDescription: String
+    freightMessage: String
     freightPrice: Float
     itemGroups: [ItemGroupsInput!]
     orderId: Int!
+    percentOfAdvancePayment: Float
+    reportingValidityAmount: Int
     saleId: Int!
     vat: Float
 }
@@ -593,9 +686,10 @@ input UpdatePriceQuotationInput {
 input UpdateProductByIdInput {
     categoryId: Int!
     height: Float
-    name: String
-    price: Float
+    priceWithVAT: Float
+    priceWithoutVAT: Float
     productId: Int!
+    productName: String
     unit: Unit
     weight: Float
 }
@@ -611,8 +705,23 @@ input UpdateProductInput {
 }
 
 input UpdateProductPriceByIdInput {
-    price: Float
+    priceWithVAT: Float
+    priceWithoutVAT: Float
     productId: [Int!]!
+}
+
+input UpdateStatusOrderForDriverInput {
+    deliverOrder: [UpdateDeliverOrderNoteInput!]!
+    orderId: Int!
+    statusOrder: StatusOrder!
+    userId: Int!
+}
+
+input UpdateStatusOrderOfAccountantInput {
+    deliverOrder: [UpdateDeliverOrderNoteInput!]!
+    orderId: Int!
+    statusOrder: StatusOrder!
+    userId: Int!
 }
 
 input UpdateStatusUserNotificationInput {

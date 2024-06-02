@@ -47,14 +47,15 @@ const UPDATE_CATEGORY_PRODUCT = loader('../../../../graphql/mutations/categoryPr
 const DELETE_PRODUCT = loader('../../../../graphql/mutations/products/deleteProductById.graphql');
 
 // ----------------------------------------------------------------------
-export const TABLE_HEAD = [
+export const TABLE_HEAD_SHAPE_PRODUCT = [
   { id: 'idx', label: 'STT', align: 'left', width: 50 },
-  { id: 'name', label: 'Tên sản phẩm', align: 'left' },
-  { id: 'code', label: 'Mã sản phẩm', align: 'left' },
-  { id: 'height', label: 'Chiều dài', align: 'left' },
-  { id: 'weight', label: 'Đơn trọng', align: 'left' },
-  { id: 'price', label: 'Giá', align: 'left' },
-  { id: 'totalPrice', label: 'Tổng giá sản phẩm', align: 'left' },
+  { id: 'productName', label: 'Tên sản phẩm', align: 'left' },
+  { id: 'length', label: 'Độ dài', align: 'left' },
+  { id: 'weight', label: 'Trọng lượng', align: 'left' },
+  { id: 'priceWithoutVAT', label: 'Giá chưa VAT', align: 'left', editable: true },
+  { id: 'totalPriceWithoutVAT', label: 'Tổng giá chưa VAT', align: 'left' },
+  { id: 'priceWithVAT', label: 'Giá có VAT', align: 'left' },
+  { id: 'totalPriceWithVAT', label: 'Tổng giá có VAT', align: 'left' },
   { id: '' },
 ];
 
@@ -104,6 +105,10 @@ export default function PriceList() {
   const [exportData, setExportData] = useState([]);
 
   const [convertData, setConvertData] = useState([]);
+
+  const [isEditingPriceWithoutVAT, setEditingPriceWithoutVAT] = useState(false);
+
+  const [isEditingPriceWithVAT, setEditingPriceWithVAT] = useState(false);
 
   const [pageInfo, setPageInfo] = useState({
     hasNextPage: false,
@@ -649,7 +654,7 @@ export default function PriceList() {
                 dense={dense}
                 order={order}
                 orderBy={orderBy}
-                headLabel={TABLE_HEAD}
+                headLabel={TABLE_HEAD_SHAPE_PRODUCT}
                 onSort={onSort}
                 rowCount={products.length}
                 numSelected={selected.length}
@@ -669,10 +674,27 @@ export default function PriceList() {
                         color="primary"
                         startIcon={<Iconify icon="material-symbols:edit-rounded" width={16} height={16} />}
                         onClick={() => {
+                          setEditingPriceWithoutVAT(true);
+                          setEditingPriceWithVAT(false);
                           handleOpenDialog();
                         }}
                       >
-                        Sửa giá sản phẩm
+                        Sửa giá chưa VAT
+                      </Button>
+                    </Tooltip>
+                    <Tooltip title=" Sửa giá có VAT">
+                      <Button
+                        size="small"
+                        variant="contained"
+                        color="primary"
+                        startIcon={<Iconify icon="material-symbols:edit-rounded" width={16} height={16} />}
+                        onClick={() => {
+                          setEditingPriceWithVAT(true);
+                          setEditingPriceWithoutVAT(false);
+                          handleOpenDialog();
+                        }}
+                      >
+                        Sửa giá có VAT
                       </Button>
                     </Tooltip>
                     <Tooltip title="Xóa">
@@ -682,9 +704,7 @@ export default function PriceList() {
                         color="primary"
                         startIcon={<Iconify icon={'eva:trash-2-outline'} width={16} height={16} />}
                         onClick={() => {
-                          handleDeleteRows(selected).catch((error) => {
-                            console.error(error);
-                          });
+                          handleDeleteRows(selected);
                         }}
                       >
                         Xóa
@@ -718,7 +738,14 @@ export default function PriceList() {
         <CommonBackdrop loading={productLoading || loading || loadingImport} />
       </Card>
 
-      <DialogVATFormType productId={selected} isOpen={open} onClose={handleCloseDialog} refetchData={refetchProduct} />
+      <DialogVATFormType
+        productId={selected}
+        isOpen={open}
+        onClose={handleCloseDialog}
+        isEditingPriceWithVAT={isEditingPriceWithVAT}
+        isEditingPriceWithoutVAT={isEditingPriceWithoutVAT}
+        refetchData={refetchProduct}
+      />
 
       <ResultImportProductFromExcelDialog
         open={isOpenErrorImportFileDialog}

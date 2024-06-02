@@ -1,0 +1,3 @@
+mutation UpdatePriceQuotation($input: UpdatePriceQuotationInput!) {
+  updatePriceQuotation(input: $input)
+}

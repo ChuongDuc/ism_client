@@ -4,6 +4,7 @@ query me {
         email
         userName
         phoneNumber
+        fullName
         firstName
         lastName
         address

@@ -13,6 +13,7 @@ import { NavSectionVertical } from '../../../components/nav-section';
 import navConfig from './NavConfig';
 import CollapseButton from './CollapseButton';
 import useAuth from '../../../hooks/useAuth';
+import AccountPopover from '../header/AccountPopover';
 
 // ----------------------------------------------------------------------
 
@@ -74,6 +75,10 @@ function NavbarVertical({ isOpenSidebar, onCloseSidebar }) {
             <CollapseButton onToggleCollapse={onToggleCollapse} collapseClick={collapseClick} />
           )}
         </Stack>
+      </Stack>
+
+      <Stack sx={{ ml: 3 }}>
+        <AccountPopover />
       </Stack>
 
       <NavSectionVertical navConfig={navConfig(user)} isCollapse={isCollapse} />

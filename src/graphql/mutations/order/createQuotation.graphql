@@ -1,0 +1,24 @@
+mutation CreatePriceQuotation($input: CreatePriceQuotationInput!) {
+  createPriceQuotation(input: $input) {
+    name
+    description
+    orderDetailList {
+      id
+      priceProduct
+      quantity
+      description
+      product {
+        id
+        code
+        name
+        price
+        weight
+        width
+        available
+        description
+      }
+    }
+    createdAt
+    updatedAt
+  }
+}

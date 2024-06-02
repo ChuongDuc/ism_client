@@ -2,7 +2,7 @@ import PropTypes from 'prop-types';
 import * as Yup from 'yup';
 import { useSnackbar } from 'notistack';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 // form
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
@@ -17,30 +17,10 @@ import { PATH_DASHBOARD } from '../../../routes/paths';
 import { FormProvider, RHFSelect, RHFTextField } from '../../../components/hook-form';
 import RHFNumberField from '../../../components/hook-form/RHFNumberField';
 import { fVietNamCurrency } from '../../../utils/formatNumber';
+import { DEFAULT_CATEGORY, UNIT } from '../../../components/dialog/ProductsDialog';
 
-// ----------------------------------------------------------------------
 const UPDATE_PRODUCT = loader('../../../graphql/mutations/products/updateProductById.graphql');
 const ALL_PRODUCT_CATEGORIES = loader('../../../graphql/queries/products/getAllCategory.graphql');
-
-// ----------------------------------------------------------------------
-
-export const DEFAULT_CATEGORY = {
-  id: 0,
-  name: 'Chọn danh mục',
-};
-
-export const UNIT = [
-  { label: 'Cây', value: 'pipe' },
-  { label: 'Tấm', value: 'plate' },
-  { label: 'Cái', value: 'cai' },
-  { label: 'Chiếc', value: 'chiec' },
-  { label: 'Mét', value: 'm' },
-  { label: 'M2', value: 'm2' },
-  { label: 'Kg', value: 'kg' },
-  { label: 'Cuộn', value: 'cuon' },
-  { label: 'Md', value: 'md' },
-];
-
 // ----------------------------------------------------------------------
 
 ProductNewEditForm.propTypes = {
@@ -68,11 +48,6 @@ export default function ProductNewEditForm({ isEdit, currentProduct }) {
       }
       return null;
     },
-    refetchQueries: () => [
-      {
-        query: ALL_PRODUCT_CATEGORIES,
-      },
-    ],
   });
 
   const { data: allCategories } = useQuery(ALL_PRODUCT_CATEGORIES, {
@@ -89,16 +64,17 @@ export default function ProductNewEditForm({ isEdit, currentProduct }) {
     name: Yup.string().required('Tên sản phẩm cần được nhập'),
     height: Yup.number().moreThan(0, 'Hãy nhật chiều cao'),
     weight: Yup.number().moreThan(0, 'Hãy nhật trọng lượng sản phẩm'),
+    priceWithVAT: Yup.number().moreThan(0, 'Giá không được là 0.00 VNĐ'),
+    priceWithoutVAT: Yup.number().moreThan(0, 'Giá không được là 0.00 VNĐ'),
     category: Yup.string().required('Hãy chọn danh mục'),
-    price: Yup.number().moreThan(0, 'Giá không được là 0.00 VNĐ'),
   });
-
   const defaultValues = useMemo(
     () => ({
       name: currentProduct?.name || '',
       height: currentProduct?.height || 0,
       weight: currentProduct?.weight || 0,
-      price: currentProduct?.price || 0,
+      priceWithVAT: currentProduct?.priceWithVAT || 0,
+      priceWithoutVAT: currentProduct?.priceWithoutVAT || 0,
       category: currentProduct?.category.name || '',
       unit: currentProduct?.unit || '',
     }),
@@ -137,21 +113,19 @@ export default function ProductNewEditForm({ isEdit, currentProduct }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isEdit, currentProduct]);
 
-  const prevPrice = useRef(values.price);
-
   useEffect(() => {
-    if (values.price !== prevPrice.current) {
-      prevPrice.current = values.price;
-      setValue('price', values.price / 1.1);
+    if (values.priceWithoutVAT) {
+      setValue('priceWithVAT', values.priceWithoutVAT * 1.1);
     }
-  }, [setValue, values.price]);
+  }, [setValue, values.priceWithoutVAT]);
 
   useEffect(() => {
     if (
       currentProduct?.name === values.name ||
       currentProduct?.height === Number(values.height) ||
       currentProduct?.weight === Number(values.weight) ||
-      currentProduct?.price === Number(values.price) ||
+      currentProduct?.priceWithVAT === Number(values.priceWithVAT) ||
+      currentProduct?.priceWithoutVAT === Number(values.priceWithoutVAT) ||
       currentProduct?.category.name === values.category ||
       currentProduct?.unit === values.unit
     ) {
@@ -166,7 +140,10 @@ export default function ProductNewEditForm({ isEdit, currentProduct }) {
     if (currentProduct?.weight !== Number(values.weight)) {
       setIsDisable(false);
     }
-    if (currentProduct?.price !== Number(values.price)) {
+    if (currentProduct?.priceWithVAT !== Number(values.priceWithVAT)) {
+      setIsDisable(false);
+    }
+    if (currentProduct?.priceWithoutVAT !== Number(values.priceWithoutVAT)) {
       setIsDisable(false);
     }
     if (currentProduct?.category.name !== values.category) {
@@ -176,19 +153,18 @@ export default function ProductNewEditForm({ isEdit, currentProduct }) {
       setIsDisable(false);
     }
   }, [currentProduct, values]);
-
   const onSubmit = async () => {
     try {
       const response = await updateProduct({
         variables: {
           input: {
             productId: Number(id),
-            name: values.name || '',
+            productName: values.name || '',
             height: Number(values.height) || null,
             weight: Number(values.weight) || null,
-            price: Number(values.price) || null,
+            priceWithVAT: Number(values.priceWithVAT) || null,
+            priceWithoutVAT: Number(values.priceWithoutVAT) || null,
             categoryId,
-            unit: values.unit,
           },
         },
         onError: (error) => {
@@ -202,7 +178,8 @@ export default function ProductNewEditForm({ isEdit, currentProduct }) {
         enqueueSnackbar('Sửa sản phẩm thành công', {
           variant: 'success',
         });
-        navigate(PATH_DASHBOARD.priceList.priceListProduct(categoryId));
+        reset();
+        navigate(PATH_DASHBOARD.priceList.root);
       }
     } catch (error) {
       console.error(error);
@@ -247,10 +224,10 @@ export default function ProductNewEditForm({ isEdit, currentProduct }) {
               />
               <RHFNumberField
                 size={'small'}
-                name="price"
-                label="Giá sản phẩm"
+                name="priceWithoutVAT"
+                label="Giá chưa VAT"
                 placeholder="0.00"
-                value={fVietNamCurrency(values.price)}
+                value={fVietNamCurrency(values.priceWithoutVAT)}
                 InputProps={{
                   endAdornment: <InputAdornment position="start">VNĐ</InputAdornment>,
                 }}
@@ -271,6 +248,18 @@ export default function ProductNewEditForm({ isEdit, currentProduct }) {
                   </option>
                 ))}
               </RHFSelect>
+              <RHFNumberField
+                size={'small'}
+                name="priceWithVAT"
+                label="Giá có VAT"
+                placeholder="0.00"
+                value={fVietNamCurrency(values.priceWithVAT)}
+                InputProps={{
+                  endAdornment: <InputAdornment position="start">VNĐ</InputAdornment>,
+                }}
+                setValue={setValue}
+                InputLabelProps={{ shrink: true }}
+              />
               <RHFSelect
                 name="unit"
                 label="Chọn đơn vị tính"
@@ -290,7 +279,6 @@ export default function ProductNewEditForm({ isEdit, currentProduct }) {
                 ))}
               </RHFSelect>
             </Box>
-
             <Stack alignItems="flex-end" sx={{ mt: 3 }}>
               <LoadingButton disabled={isDisable} type="submit" variant="contained" size="small" loading={isSubmitting}>
                 {!isEdit ? 'Thêm sản phẩm' : 'Lưu thay đổi'}
