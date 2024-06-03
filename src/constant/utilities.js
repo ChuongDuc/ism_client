@@ -9,7 +9,7 @@ export const OrderStatusArr = [
   'Xác nhận thanh toán và hồ sơ',
   // 'Chưa thanh toán',
   // 'Quá hạn',
-  'Đã thanh toán',
+  'Đang thanh toán',
   'Đơn hàng hoàn thành',
 ];
 
