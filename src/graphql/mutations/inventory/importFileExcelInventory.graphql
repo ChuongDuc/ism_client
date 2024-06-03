@@ -6,7 +6,6 @@ mutation ImportFileExcelInventory($input: ImportFileExcelInventoryInput!) {
         weight
         unit
         quantity
-        description
         fileName
         createdAt
         updatedAt

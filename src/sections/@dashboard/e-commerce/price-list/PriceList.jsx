@@ -703,9 +703,7 @@ export default function PriceList() {
                         variant="contained"
                         color="primary"
                         startIcon={<Iconify icon={'eva:trash-2-outline'} width={16} height={16} />}
-                        onClick={() => {
-                          handleDeleteRows(selected);
-                        }}
+                        onClick={() => handleDeleteRows(selected)}
                       >
                         Xóa
                       </Button>

@@ -29,9 +29,9 @@ const BootstrapDialog = styled(Dialog)(({ theme }) => ({
 ResultImportProductFromExcelDialog.propTypes = {
   onClose: PropTypes.func.isRequired,
   open: PropTypes.bool.isRequired,
-  errorMessages: PropTypes.arrayOf(PropTypes.string).isRequired,
-  addNewMessage: PropTypes.string.isRequired,
-  updateMessage: PropTypes.string.isRequired,
+  errorMessages: PropTypes.arrayOf(PropTypes.string),
+  addNewMessage: PropTypes.string,
+  updateMessage: PropTypes.string,
 };
 
 export default function ResultImportProductFromExcelDialog({

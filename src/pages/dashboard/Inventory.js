@@ -133,8 +133,8 @@ export default function Inventory() {
             fileName,
           },
         },
-        onError: () => {
-          enqueueSnackbar(`Thêm không thành công. Sản phẩm đã tồn tại hoặc nhập thiếu thông tin.`, {
+        onError: (error) => {
+          enqueueSnackbar(`Thêm không thành công. Sản phẩm đã tồn tại hoặc nhập thiếu thông tin ${error}.`, {
             variant: 'error',
             autoHideDuration: 10000,
           });
