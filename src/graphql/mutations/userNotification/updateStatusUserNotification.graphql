@@ -1,0 +1,3 @@
+mutation UpdateStatusUserNotification($input: UpdateStatusUserNotificationInput!) {
+    updateStatusUserNotification(input: $input)
+}

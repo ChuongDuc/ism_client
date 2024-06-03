@@ -1,0 +1,33 @@
+query ListUserNotification($input: ListUserNotificationInput!) {
+    listUserNotification(input: $input) {
+        edges {
+            cursor
+            node {
+                id
+                user {
+                    id
+                    email
+                }
+                notification {
+                    id
+                    event
+                    content
+                    Order {
+                        id
+                        sale {
+                            id
+                        }
+                    }
+                }
+                isRead
+                createdAt
+                updatedAt
+            }
+        }
+        pageInfo {
+            hasNextPage
+            endCursor
+        }
+        totalCount
+    }
+}

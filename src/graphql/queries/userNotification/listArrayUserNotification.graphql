@@ -1,0 +1,63 @@
+query ListArrayUserNotification($input: ListArrayUserNotificationInput!) {
+  listArrayUserNotification(input: $input) {
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+    totalCount
+    edges {
+      cursor
+      node {
+        id
+        user {
+          id
+          email
+        }
+        notification {
+          id
+          event
+          content
+          Order {
+            id
+            VAT
+            invoiceNo
+            deliverAddress
+            status
+            freightPrice
+            remainingPaymentMoney
+            totalMoney
+            sale {
+              id
+              fullName
+              phoneNumber
+            }
+            customer {
+              phoneNumber
+              name
+            }
+            deliverOrderList {
+              driver {
+                id
+                firstName
+                lastName
+                fullName
+                phoneNumber
+              }
+            }
+            paymentList {
+              id
+              money
+              description
+              updatedAt
+            }
+            createdAt
+            updatedAt
+          }
+        }
+        isRead
+        createdAt
+        updatedAt
+      }
+    }
+  }
+}

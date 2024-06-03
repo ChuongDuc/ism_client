@@ -1,71 +1,171 @@
 import { useTheme } from '@mui/material/styles';
-import { Container, Grid } from '@mui/material';
+import { Card, CardContent, CardHeader, Container, Grid, Stack, Typography } from '@mui/material';
+import { loader } from 'graphql.macro';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useQuery } from '@apollo/client';
 import useAuth from '../../hooks/useAuth';
-import useSettings from '../../hooks/useSettings';
 import Page from '../../components/Page';
-import {
-  AppAreaInstalled,
-  AppNewInvoice,
-  AppTopAuthors,
-  AppWidgetSummary,
-} from '../../sections/@dashboard/general/app';
-import { Role } from '../../constant';
-
+import { DefaultRowsPerPage } from '../../constant';
+import CommonNotificationList from '../../sections/@dashboard/general/app/CommonNotificationList';
+import OrderMoneyCard from '../../sections/@dashboard/general/app/OrderMoneyCard';
+// ----------------------------------------------------------------------
+const NOTIFICATION = loader('../../graphql/queries/userNotification/listUserNotification.graphql');
+const ARRAY_NOTIFICATION = loader('../../graphql/queries/userNotification/listArrayUserNotification.graphql');
 // ----------------------------------------------------------------------
 
 export default function GeneralApp() {
   const { user } = useAuth();
   const theme = useTheme();
-  const { themeStretch } = useSettings();
+
+  const [getListUserNotification, setGetListUserNotification] = useState([]);
+
+  const [getListArrUserNotification, setGetListArrUserNotification] = useState([]);
+
+  const [page, setPage] = useState(0);
+
+  const [pageInfo, setPageInfo] = useState({
+    hasNextPage: false,
+    endCursor: 0,
+  });
+
+  const {
+    data: listNotification,
+    loading: loadingNotificationList,
+    error: errorNotificationList,
+  } = useQuery(NOTIFICATION, {
+    variables: {
+      input: {
+        userId: Number(user.id),
+        args: {
+          first: 100,
+          after: 0,
+        },
+      },
+    },
+  });
+
+  const { data: listArrNotification, fetchMore } = useQuery(ARRAY_NOTIFICATION, {
+    variables: {
+      input: {
+        userId: Number(user.id),
+        event: 'Payment',
+        args: {
+          first: DefaultRowsPerPage,
+          after: 0,
+        },
+      },
+    },
+  });
+
+  useEffect(() => {
+    if (listNotification) {
+      setGetListUserNotification(listNotification?.listUserNotification?.edges.map((el) => el.node));
+    }
+  }, [listNotification]);
+
+  useEffect(() => {
+    if (listArrNotification) {
+      setGetListArrUserNotification(listArrNotification.listArrayUserNotification?.edges.map((el) => el.node));
+      setPageInfo((prevState) => ({
+        ...prevState,
+        hasNextPage: listArrNotification.listArrayUserNotification?.pageInfo.hasNextPage,
+        endCursor: parseInt(listArrNotification.listArrayUserNotification?.pageInfo.endCursor, 10),
+      }));
+    }
+  }, [listArrNotification]);
+
+  const updateQuery = (previousResult, { fetchMoreResult }) => {
+    if (!fetchMoreResult) return previousResult;
+    return {
+      ...previousResult,
+      listArrayUserNotification: {
+        ...previousResult.listArrayUserNotification,
+        edges: [...previousResult.listArrayUserNotification.edges, ...fetchMoreResult.listArrayUserNotification.edges],
+        pageInfo: fetchMoreResult.listArrayUserNotification.pageInfo,
+        totalCount: fetchMoreResult.listArrayUserNotification.totalCount,
+      },
+    };
+  };
+
+  const filteredMoneyOrders = useMemo(
+    () => getListArrUserNotification.map((t) => t?.notification?.Order),
+    [getListArrUserNotification]
+  );
+
+  const tableEl = useRef();
+  const [loading, setLoading] = useState(false);
+  const [distanceBottom, setDistanceBottom] = useState(0);
+  const scrollListener = useCallback(() => {
+    const bottom = tableEl.current?.scrollHeight - tableEl.current?.clientHeight;
+
+    // if you want to change distanceBottom every time new data is loaded
+    // don't use the if statement
+    if (!distanceBottom) {
+      // calculate distanceBottom that works for you
+      setDistanceBottom(Math.round(bottom * 0.2));
+    }
+
+    if (tableEl.current?.scrollTop > bottom - distanceBottom && pageInfo.hasNextPage && !loading) {
+      setLoading(true);
+      fetchMore({
+        variables: {
+          input: {
+            userId: Number(user.id),
+            event: 'Payment',
+            args: {
+              first: DefaultRowsPerPage,
+              after: (page + 1) * DefaultRowsPerPage,
+            },
+          },
+        },
+        updateQuery: (previousResult, { fetchMoreResult }) => updateQuery(previousResult, { fetchMoreResult }),
+      }).then(() => {
+        setLoading(false);
+        setPage(page + 1);
+      });
+    }
+  }, [setPage, fetchMore, pageInfo.hasNextPage, page, loading, distanceBottom, user.id]);
+
+  useLayoutEffect(() => {
+    const tableRef = tableEl.current;
+    tableRef?.addEventListener('scroll', scrollListener);
+    return () => {
+      tableRef?.removeEventListener('scroll', scrollListener);
+    };
+  }, [scrollListener]);
 
   return (
     <Page title="Thông tin tổng hợp">
-      <Container maxWidth={themeStretch ? false : 'xl'}>
+      <Container maxWidth={false}>
         <Grid container spacing={3}>
-          {user.role === Role.director && (
-            <>
-              <Grid item xs={12} md={4}>
-                <AppWidgetSummary
-                  title="Doanh thu tuần này"
-                  percent={2.6}
-                  total={2876500000}
-                  chartColor={theme.palette.primary.main}
-                  chartData={[5, 18, 12, 51, 68, 11, 39, 37, 27, 20]}
-                />
-              </Grid>
-
-              <Grid item xs={12} md={4}>
-                <AppWidgetSummary
-                  title="Doanh thu tháng này"
-                  percent={0.2}
-                  total={20986500000}
-                  chartColor={theme.palette.chart.blue[0]}
-                  chartData={[20, 41, 63, 33, 28, 35, 50, 46, 11, 26]}
-                />
-              </Grid>
-
-              <Grid item xs={12} md={4}>
-                <AppWidgetSummary
-                  title="Doanh thu quý này"
-                  percent={3.5}
-                  total={60986500000}
-                  chartColor={theme.palette.primary.main}
-                  chartData={[8, 9, 31, 8, 16, 37, 8, 33, 46, 31]}
-                />
-              </Grid>
-            </>
-          )}
-
-          <Grid item xs={12}>
-            <AppAreaInstalled />
+          <Grid item xs={12} md={6} lg={6}>
+            <CommonNotificationList
+              notificationList={getListUserNotification}
+              errorNotificationList={errorNotificationList}
+              loadingNotificationList={loadingNotificationList}
+            />
           </Grid>
 
-          <Grid item xs={12} lg={8}>
-            <AppNewInvoice />
-          </Grid>
-
-          <Grid item xs={12} lg={4}>
-            <AppTopAuthors />
+          <Grid item xs={12} md={6} lg={6}>
+            <Card>
+              <CardHeader title="Thông tin thanh toán" />
+              <CardContent>
+                <div
+                  ref={tableEl}
+                  style={{ height: theme.breakpoints.up('sm') ? '75dvh' : '170px', overflowY: 'auto' }}
+                >
+                  {filteredMoneyOrders.length > 0 ? (
+                    <Stack spacing={2}>
+                      {filteredMoneyOrders.map((moneyOrder, idx) => (
+                        <OrderMoneyCard key={idx} moneyOrder={moneyOrder} onDelete={() => console.log('DELETE', idx)} />
+                      ))}
+                    </Stack>
+                  ) : (
+                    <Typography variant="subtitle2">Bạn chưa có thông tin đơn hàng thanh toán</Typography>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
           </Grid>
         </Grid>
       </Container>

@@ -273,7 +273,7 @@ type Query {
     listAllDeliverOrder(input: ListAllDeliverOrderInput!): ListAllDeliverOrderResponse!
     listAllInventory(input: ListAllInventoryInput!): InventoryConnection!
     listAllProducts(input: ListAllProductsInput!): ProductConnection!
-    listArrayUserNotification(input: ListArrayUserNotificationInput!): [UserNotification]!
+    listArrayUserNotification(input: ListArrayUserNotificationInput!): UserNotificationConnection!
     listUserNotification(input: ListUserNotificationInput!): UserNotificationConnection!
     login(input: UserLoginInput!): UserLoginResponse!
     me: User!
@@ -319,7 +319,7 @@ type UserLoginResponse {
 
 type UserNotification {
     createdAt: Date
-    idUserNotification: Int!
+    id: Int!
     isRead: Boolean!
     notification: Notification!
     updatedAt: Date
@@ -575,6 +575,7 @@ input ListAllProductsInput {
 }
 
 input ListArrayUserNotificationInput {
+    args: PaginationInput
     event: NotificationEvent
     userId: Int!
 }
