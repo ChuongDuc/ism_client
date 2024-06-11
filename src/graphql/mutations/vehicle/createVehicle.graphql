@@ -1,0 +1,17 @@
+mutation CreateVehicle($input: CreateVehicleInput!) {
+    createVehicle(input: $input) {
+        id
+        driver {
+            id
+            email
+            userName
+            avatarURL
+        }
+        typeVehicle
+        weight
+        licensePlates
+        note
+        createdAt
+        updatedAt
+    }
+}

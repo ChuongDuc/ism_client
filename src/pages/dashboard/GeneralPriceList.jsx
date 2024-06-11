@@ -12,6 +12,7 @@ import { Role } from '../../constant';
 import CommonBackdrop from '../../components/CommonBackdrop';
 import { PATH_DASHBOARD } from '../../routes/paths';
 import CreateCategory from '../../sections/@dashboard/category-product/CreateCategory';
+import Image from '../../components/Image';
 // ----------------------------------------------------------------------------------------------
 const GET_ALL_CATEGORY = loader('../../graphql/queries/products/getAllCategory.graphql');
 // ----------------------------------------------------------------------
@@ -77,6 +78,11 @@ export default function GeneralPriceList() {
                 }}
               >
                 <CardContent sx={{ textAlign: 'center', paddingX: '6px' }}>
+                  <Image
+                    alt={`product_${idx + 1}.jpg`}
+                    src={`/static/mock-images/steel-products/product_${idx + 1}.jpg`}
+                    ratio="24/9"
+                  />
                   <Link to={PATH_DASHBOARD.priceList.priceListProduct(tab.id)} color="inherit" component={RouterLink}>
                     <Typography fontWeight={500} variant="body2" sx={{ color: 'common.black' }}>
                       {tab.name}

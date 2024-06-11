@@ -128,12 +128,14 @@ type Mutation {
     createPriceQuotation(input: CreatePriceQuotationInput!): [ItemGroup]!
     createProduct(input: CreateProductInput!): Product!
     createUser(input: CreateUserInput!): User!
+    createVehicle(input: CreateVehicleInput!): Vehicle!
     deleteCustomer(input: DeleteCustomerInput!): SuccessResponse!
     deleteDeliverOrders(input: DeleteDeliverOrdersInput!): SuccessResponse!
     deleteOrder(input: DeleteOrderInput!): SuccessResponse!
     deletePaymentInfor(input: DeletePaymentInforInput!): SuccessResponse!
     deleteProductById(input: DeleteProductByIdInput!): SuccessResponse!
     deleteUser(input: DeleteUserInput!): SuccessResponse!
+    deleteVehicle(input: DeleteVehicleInput!): SuccessResponse!
     importFileExcelInventory(input: ImportFileExcelInventoryInput!): [Inventory]!
     importFileExcelProducts(input: ImportFileExcelProductsInput!): [Product]!
     resetPassword(input: ResetPasswordInput!): SuccessResponse!
@@ -149,6 +151,7 @@ type Mutation {
     updateStatusOrderOfAccountant(input: UpdateStatusOrderOfAccountantInput!): SuccessResponse!
     updateStatusUserNotification(input: UpdateStatusUserNotificationInput!): SuccessResponse!
     updateUser(input: UpdateUserInput!): SuccessResponse!
+    updateVehicle(input: UpdateVehicleInput!): SuccessResponse!
 }
 
 type Notification {
@@ -273,7 +276,9 @@ type Query {
     listAllDeliverOrder(input: ListAllDeliverOrderInput!): ListAllDeliverOrderResponse!
     listAllInventory(input: ListAllInventoryInput!): InventoryConnection!
     listAllProducts(input: ListAllProductsInput!): ProductConnection!
+    listAllVehicle(input: ListAllVehicleInput!): VehicleConnection!
     listArrayUserNotification(input: ListArrayUserNotificationInput!): UserNotificationConnection!
+    listDriverUnselectedVehicle: [User]!
     listUserNotification(input: ListUserNotificationInput!): UserNotificationConnection!
     login(input: UserLoginInput!): UserLoginResponse!
     me: User!
@@ -337,6 +342,28 @@ type UserNotificationEdge {
     node: UserNotification
 }
 
+type Vehicle {
+    createdAt: Date
+    driver: User!
+    id: Int!
+    licensePlates: String!
+    note: String
+    typeVehicle: TypeVehicle!
+    updatedAt: Date
+    weight: Float!
+}
+
+type VehicleConnection {
+    edges: [VehicleEdge]
+    pageInfo: PageInfo!
+    totalCount: Int!
+}
+
+type VehicleEdge {
+    cursor: String!
+    node: Vehicle
+}
+
 enum FormType {
     VAT
     tonnage
@@ -351,6 +378,7 @@ enum NotificationEvent {
     NewMessage
     NewOrder
     NewProduct
+    NewVehicle
     OrderStatusChanged
     Payment
     PaymentChanged
@@ -386,6 +414,11 @@ enum SuccessResponse {
 enum TypeProduct {
     plate
     shape
+}
+
+enum TypeVehicle {
+    container
+    truck
 }
 
 enum Unit {
@@ -492,6 +525,15 @@ input CreateUserInput {
     userName: String!
 }
 
+input CreateVehicleInput {
+    createdById: Int!
+    driverId: Int!
+    licensePlates: String!
+    note: String
+    typeVehicle: TypeVehicle!
+    weight: Float!
+}
+
 input DeleteCustomerInput {
     ids: [Int!]!
 }
@@ -515,6 +557,11 @@ input DeleteProductByIdInput {
 }
 
 input DeleteUserInput {
+    ids: [Int!]!
+}
+
+input DeleteVehicleInput {
+    deletedBy: Int!
     ids: [Int!]!
 }
 
@@ -572,6 +619,13 @@ input ListAllProductsInput {
     name: String
     typeProduct: TypeProduct
     unit: Unit
+}
+
+input ListAllVehicleInput {
+    args: PaginationInput
+    driverId: Int
+    stringQuery: String
+    typeVehicle: TypeVehicle
 }
 
 input ListArrayUserNotificationInput {
@@ -743,6 +797,16 @@ input UpdateUserInput {
     phoneNumber: String
     role: Role
     userName: String
+}
+
+input UpdateVehicleInput {
+    createdById: Int!
+    driverId: Int
+    licensePlates: String
+    note: String
+    typeVehicle: TypeVehicle
+    vehicleId: Int!
+    weight: Float
 }
 
 input UserLoginInput {

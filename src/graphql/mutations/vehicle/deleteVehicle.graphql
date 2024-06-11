@@ -1,0 +1,3 @@
+mutation DeleteVehicle($input: DeleteVehicleInput!) {
+    deleteVehicle(input: $input)
+}

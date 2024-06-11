@@ -122,16 +122,6 @@ export default function Router() {
               path: 'bao-gia-thep/:id',
               element: <PriceList />,
             },
-            // {
-            //   path: 'tao-moi-danh-muc-sp',
-            //   element: (
-            //     <RoleBasedGuard
-            //       accessibleRoles={[Role.admin, Role.director, Role.accountant, Role.sales, Role.transporterManager]}
-            //     >
-            //       <CategoryProductCreate />
-            //     </RoleBasedGuard>
-            //   ),
-            // },
           ],
         },
 
@@ -171,10 +161,9 @@ export default function Router() {
               ),
               index: true,
             },
-            { path: 'danh-sach', element: <ComingSoon /> },
-            { path: 'tao-moi', element: <ComingSoon /> },
-            { path: ':id', element: <ComingSoon /> },
-            { path: ':id/cap-nhat', element: <ComingSoon /> },
+            { path: 'danh-sach', element: <TransitCarList /> },
+            { path: 'tao-moi', element: <TransitCarCreate /> },
+            { path: ':id/cap-nhat', element: <TransitCarCreate /> },
           ],
         },
 
@@ -310,3 +299,7 @@ const GeneralPriceList = Loadable(lazy(() => import('../pages/dashboard/GeneralP
 const PriceList = Loadable(lazy(() => import('../sections/@dashboard/e-commerce/price-list/PriceList')));
 
 const CreateNewQuotationVer2 = Loadable(lazy(() => import('../pages/dashboard/CreateNewQuotationVer2')));
+
+// TRANSPORTATION
+const TransitCarList = Loadable(lazy(() => import('../pages/dashboard/TransitCarList')));
+const TransitCarCreate = Loadable(lazy(() => import('../pages/dashboard/TransitCarCreate')));

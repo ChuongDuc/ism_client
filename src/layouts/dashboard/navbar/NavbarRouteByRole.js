@@ -48,6 +48,12 @@ export const adminNavConfig = [
           { title: 'Bảng giá chung', path: PATH_DASHBOARD.priceList.root, icon: ICONS.priceList },
         ],
       },
+      {
+        title: 'Xe, Phương tiện',
+        path: PATH_DASHBOARD.transportation.root,
+        icon: ICONS.forklift,
+        children: [{ title: 'Danh sách', path: PATH_DASHBOARD.transportation.list }],
+      },
     ],
   },
   {
@@ -107,6 +113,13 @@ export const directorNavConfig = [
           { title: 'Tồn kho', path: PATH_DASHBOARD.inventory },
           { title: 'Bảng giá chung', path: PATH_DASHBOARD.priceList.root, icon: ICONS.priceList },
         ],
+      },
+
+      {
+        title: 'Xe, Phương tiện',
+        path: PATH_DASHBOARD.transportation.root,
+        icon: ICONS.forklift,
+        children: [{ title: 'Danh sách', path: PATH_DASHBOARD.transportation.list }],
       },
     ],
   },
@@ -249,7 +262,15 @@ export const transporterManagerNavConfig = [
     items: [
       { title: 'Thông tin tổng hợp', path: PATH_DASHBOARD.general.app, icon: ICONS.dashboard },
       { title: 'Tài khoản', path: PATH_DASHBOARD.userAccount, icon: ICONS.user },
-      { title: 'Bảng Lương', path: PATH_DASHBOARD.general.salaryBySale, icon: ICONS.salary },
+      {
+        title: 'Người dùng, nhân viên',
+        path: PATH_DASHBOARD.user.root,
+        icon: ICONS.user,
+        children: [
+          { title: 'Danh sách', path: PATH_DASHBOARD.user.list },
+          { title: 'Tạo mới', path: PATH_DASHBOARD.user.new },
+        ],
+      },
     ],
   },
   // Vận tải
@@ -273,40 +294,28 @@ export const transporterManagerNavConfig = [
         children: [
           { title: 'Danh sách', path: PATH_DASHBOARD.transportation.list },
           { title: 'Tạo mới', path: PATH_DASHBOARD.transportation.new },
-          { title: 'Cập nhật', path: PATH_DASHBOARD.transportation.demoEdit },
         ],
       },
-      {
-        title: 'Lái xe, phụ xe',
-        path: PATH_DASHBOARD.driver.root,
-        icon: ICONS.customer,
-        children: [
-          { title: 'Danh sách', path: PATH_DASHBOARD.driver.list },
-          { title: 'Tạo mới', path: PATH_DASHBOARD.driver.new },
-          { title: 'Cập nhật', path: PATH_DASHBOARD.driver.demoEdit },
-        ],
-      },
-      { title: 'Tổng hợp hàng tháng', path: '#', icon: ICONS.analytics },
     ],
   },
   // APP
   // ----------------------------------------------------------------------
-  {
-    subheader: 'Chức năng',
-    items: [
-      {
-        title: 'Forum',
-        path: PATH_DASHBOARD.blog.root,
-        icon: ICONS.blog,
-        children: [
-          { title: 'Tin tức', path: PATH_DASHBOARD.blog.posts },
-          { title: 'Chi tiết', path: PATH_DASHBOARD.blog.demoView },
-          { title: 'Tạo mới', path: PATH_DASHBOARD.blog.new },
-        ],
-      },
-      { title: 'Lịch làm việc', path: PATH_DASHBOARD.calendar, icon: ICONS.calendar },
-    ],
-  },
+  // {
+  //   subheader: 'Chức năng',
+  //   items: [
+  //     {
+  //       title: 'Forum',
+  //       path: PATH_DASHBOARD.blog.root,
+  //       icon: ICONS.blog,
+  //       children: [
+  //         { title: 'Tin tức', path: PATH_DASHBOARD.blog.posts },
+  //         { title: 'Chi tiết', path: PATH_DASHBOARD.blog.demoView },
+  //         { title: 'Tạo mới', path: PATH_DASHBOARD.blog.new },
+  //       ],
+  //     },
+  //     { title: 'Lịch làm việc', path: PATH_DASHBOARD.calendar, icon: ICONS.calendar },
+  //   ],
+  // },
 ];
 
 export const driverNavConfig = [
@@ -334,6 +343,12 @@ export const driverNavConfig = [
         title: 'Lệnh xuất hàng ',
         path: PATH_DASHBOARD.deliveryOrder.list,
         icon: ICONS.fastDelivery,
+      },
+      {
+        title: 'Xe, Phương tiện',
+        path: PATH_DASHBOARD.transportation.root,
+        icon: ICONS.forklift,
+        children: [{ title: 'Danh sách', path: PATH_DASHBOARD.transportation.list }],
       },
     ],
   },
