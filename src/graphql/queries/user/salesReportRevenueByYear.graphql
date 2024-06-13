@@ -1,0 +1,6 @@
+query SalesReportRevenueByYear($input: SalesReportRevenueByYearInput!) {
+    salesReportRevenueByYear(input: $input){
+        month
+        totalRevenue
+    }
+}

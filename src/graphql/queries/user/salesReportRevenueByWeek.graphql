@@ -1,0 +1,6 @@
+query SalesReportRevenueByWeek($input: SalesReportRevenueByWeekInput!) {
+    salesReportRevenueByWeek(input: $input){
+        date
+        totalRevenue
+    }
+}

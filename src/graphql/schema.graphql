@@ -6,6 +6,12 @@ schema {
     subscription: Subscription
 }
 
+type AdminReportRevenueByMonthResponse {
+    sale: String!
+    totalOrder: Int!
+    totalRevenue: Float!
+}
+
 type Category {
     createdAt: Date
     id: Int
@@ -268,6 +274,7 @@ type ProductEdge {
 }
 
 type Query {
+    adminReportRevenueByMonth(input: AdminReportRevenueByMonthInput!): [AdminReportRevenueByMonthResponse]!
     filterAllOrder(input: FilterAllOrderInput!): FilterAllOrdersResponse!
     getAllCategory: [Category]!
     getOrderById(id: Int!): Order!
@@ -283,7 +290,19 @@ type Query {
     login(input: UserLoginInput!): UserLoginResponse!
     me: User!
     productDetail(input: ProductDetailInput!): Product!
+    salesReportRevenueByWeek(input: SalesReportRevenueByWeekInput!): [SalesReportRevenueByWeekResponse]!
+    salesReportRevenueByYear(input: SalesReportRevenueByYearInput!): [SalesReportRevenueByYearResponse]!
     users(input: UsersInput!): UserConnection!
+}
+
+type SalesReportRevenueByWeekResponse {
+    date: Date!
+    totalRevenue: Float!
+}
+
+type SalesReportRevenueByYearResponse {
+    month: Int!
+    totalRevenue: Float!
 }
 
 type Subscription {
@@ -440,6 +459,11 @@ scalar Date
 scalar JSON
 
 scalar Upload
+
+input AdminReportRevenueByMonthInput {
+    endAt: Date!
+    startAt: Date!
+}
 
 input CategoryOrderInput {
     description: String
@@ -659,6 +683,18 @@ input ProductDetailInput {
 
 input ResetPasswordInput {
     userId: Int!
+}
+
+input SalesReportRevenueByWeekInput {
+    endAt: Date!
+    saleId: Int!
+    startAt: Date!
+}
+
+input SalesReportRevenueByYearInput {
+    endAt: Date!
+    saleId: Int!
+    startAt: Date!
 }
 
 input SubscribeNotificationsInput {
