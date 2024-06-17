@@ -5,6 +5,6 @@ const Roles = [
   { name: 'Sales', label: 'Bán hàng' },
   { name: 'TransporterManager', label: 'Quản lí vận chuyển' },
   { name: 'Driver', label: 'Tài xế' },
-  { name: 'AssistantDriver', label: 'Phụ lái' },
+  // { name: 'AssistantDriver', label: 'Phụ lái' },
 ];
 export default Roles;
