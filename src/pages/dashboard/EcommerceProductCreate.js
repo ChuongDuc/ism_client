@@ -37,13 +37,10 @@ export default function EcommerceProductCreate() {
     <Page title="Thêm sản phẩm mới">
       <Container maxWidth={false}>
         <HeaderBreadcrumbs
-          heading={!isEdit ? 'Thêm sản phẩm mới' : 'Sửa sản phầm'}
+          heading={!isEdit ? 'Thêm sản phẩm mới' : 'Sửa sản phẩm'}
           links={[
             { name: 'Dashboard', href: PATH_DASHBOARD.root },
-            {
-              name: 'Danh sách sản phẩm',
-              href: PATH_DASHBOARD.product.root,
-            },
+            { name: 'Bảng giá chung', href: PATH_DASHBOARD.priceList.root },
             { name: !isEdit ? 'Sản phẩm mới' : 'Sửa thông tin sản phẩm' },
           ]}
         />
