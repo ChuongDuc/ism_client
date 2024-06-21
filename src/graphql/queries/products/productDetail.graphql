@@ -19,7 +19,6 @@ query ProductDetail($input: ProductDetailInput!) {
             id
             name
         }
-        subCategory
         unit
         formType
         description

@@ -254,7 +254,6 @@ type Product {
     price: Float!
     priceWithVAT: Float!
     priceWithoutVAT: Float!
-    subCategory: String
     type: TypeProduct!
     unit: Unit
     updatedAt: Date

@@ -22,7 +22,6 @@ query ListAllProducts($input: ListAllProductsInput!) {
           id
           name
         }
-        subCategory
         unit
         formType
         description
