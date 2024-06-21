@@ -195,7 +195,7 @@ export default function InvoicePDFTmp({ invoice, formMethod, isEdit }) {
     <Document>
       <Page size="A4" style={styles.page}>
         <View style={[styles.header]}>
-          <Image source="/logo/cmd-steel-logo-2.png" style={{ height: '100px', width: '150px', marginTop: -20 }} />
+          <Image source="/logo/cmd_avatar_2.png" style={{ height: '100px', width: '150px', marginTop: -20 }} />
           <Text
             style={{ position: 'absolute', fontFamily: 'Tahoma', top: 65, left: 27, fontSize: 11, color: '#353538' }}
           >
