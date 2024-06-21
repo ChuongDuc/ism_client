@@ -231,7 +231,7 @@ export default function TransportationList() {
       <Page title="Danh sách Xe-phương tiện">
         <Container maxWidth={false}>
           <HeaderBreadcrumbs
-            heading="Danh sách người dùng"
+            heading="Danh sách Xe-phương tiện"
             links={[
               { name: 'Thông tin tổng hợp', href: PATH_DASHBOARD.root },
               { name: 'Xe-phương tiện', href: PATH_DASHBOARD.transportation.root },
