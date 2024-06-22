@@ -34,7 +34,7 @@ export default function EcommerceProductCreate() {
 
   const currentProduct = data?.productDetail;
   return (
-    <Page title="Thêm sản phẩm mới">
+    <Page title="Sửa thông tin sản phẩm mới">
       <Container maxWidth={false}>
         <HeaderBreadcrumbs
           heading={!isEdit ? 'Thêm sản phẩm mới' : 'Sửa sản phẩm'}

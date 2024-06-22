@@ -12,7 +12,6 @@ import { IconButtonAnimate, varFade } from '../animate';
 import ToggleButton from './ToggleButton';
 import SettingMode from './SettingMode';
 import SettingLayout from './SettingLayout';
-import SettingStretch from './SettingStretch';
 import SettingFullscreen from './SettingFullscreen';
 import SettingColorPresets from './SettingColorPresets';
 
@@ -125,10 +124,10 @@ export default function Settings() {
                     <SettingColorPresets />
                   </Stack>
 
-                  <Stack spacing={1.5}>
-                    <Typography variant="subtitle2">Màn hình rộng</Typography>
-                    <SettingStretch />
-                  </Stack>
+                  {/* <Stack spacing={1.5}> */}
+                  {/*  <Typography variant="subtitle2">Màn hình rộng</Typography> */}
+                  {/*  <SettingStretch /> */}
+                  {/* </Stack> */}
 
                   <SettingFullscreen />
                 </Stack>
