@@ -40,7 +40,7 @@ export default function GeneralPriceList() {
   };
 
   return (
-    <Page title="Bảng giá chung">
+    <Page title="Danh mục sản phẩm">
       <Container maxWidth={false}>
         <Stack
           direction="row"
@@ -48,7 +48,7 @@ export default function GeneralPriceList() {
           justifyContent={user?.role === Role.admin || user?.role === Role.director ? 'space-between' : 'left'}
         >
           <Typography variant="h6" gutterBottom textAlign="center" textTransform="none">
-            Bảng giá chung
+            Danh mục sản phẩm
           </Typography>
 
           {(user?.role === Role.admin || user?.role === Role.director) && (
