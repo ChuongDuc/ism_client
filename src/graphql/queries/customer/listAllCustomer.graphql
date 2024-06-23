@@ -12,6 +12,10 @@ query ListAllCustomer($input: ListAllCustomerInput!) {
                 orders{
                     id
                     invoiceNo
+                    sale {
+                        id
+                        fullName
+                    }
                     VAT
                     status
                     freightPrice
