@@ -1,13 +1,18 @@
 // noinspection DuplicatedCode
 
 import PropTypes from 'prop-types';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Checkbox, IconButton, MenuItem, TableCell, TableRow, Typography } from '@mui/material';
+import { loader } from 'graphql.macro';
+import { useQuery } from '@apollo/client';
 import { fVietNamCurrency } from '../../../../utils/formatNumber';
 import Iconify from '../../../../components/Iconify';
 import useAuth from '../../../../hooks/useAuth';
 import MenuPopover from '../../../../components/MenuPopover';
+import { fddMMYYYYWithSlash } from '../../../../utils/formatTime';
 
+// ----------------------------------------------------------------------
+const LIST_ALL_INVENTORY = loader('../../../../graphql/queries/inventory/listAllInventory.graphql');
 // ----------------------------------------------------------------------
 
 PriceListTableRow.propTypes = {
@@ -19,11 +24,14 @@ PriceListTableRow.propTypes = {
 };
 
 export default function PriceListTableRow({ row, selected, idx, onEditRow, onSelectRow }) {
-  const { name, weight, priceWithoutVAT, priceWithVAT, height } = row;
+  const { name, weight, priceWithoutVAT, priceWithVAT, height, shipment } = row;
+  console.log(row);
 
   const { user } = useAuth();
 
   const [openMenu, setOpenMenuActions] = useState(null);
+
+  const [inventory, setInventory] = useState([]);
 
   const handleOpenMenu = (event) => {
     setOpenMenuActions(event.currentTarget);
@@ -32,6 +40,20 @@ export default function PriceListTableRow({ row, selected, idx, onEditRow, onSel
   const handleCloseMenu = () => {
     setOpenMenuActions(null);
   };
+
+  const { data: allInventory } = useQuery(LIST_ALL_INVENTORY, {
+    variables: {
+      input: {
+        searchQuery: name,
+      },
+    },
+  });
+
+  useEffect(() => {
+    if (allInventory) {
+      setInventory(allInventory.listAllInventory?.edges.map((edge) => edge.node)[0]);
+    }
+  }, [allInventory]);
 
   return (
     <TableRow hover selected={selected}>
@@ -67,6 +89,18 @@ export default function PriceListTableRow({ row, selected, idx, onEditRow, onSel
 
       <TableCell align="left">
         <Typography variant="caption">{fVietNamCurrency(Number(priceWithVAT) * Number(weight))}</Typography>
+      </TableCell>
+
+      <TableCell align="left">
+        <Typography variant="caption">{inventory ? inventory.quantity : 0}</Typography>
+      </TableCell>
+
+      <TableCell align="left">
+        <Typography variant="caption">{shipment?.shimentCode ?? 'Chưa có'}</Typography>
+      </TableCell>
+
+      <TableCell align="left">
+        <Typography variant="caption">{fddMMYYYYWithSlash(shipment?.receivedDate)}</Typography>
       </TableCell>
 
       <TableCell align="right">

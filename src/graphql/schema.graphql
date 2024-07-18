@@ -254,6 +254,7 @@ type Product {
     price: Float!
     priceWithVAT: Float!
     priceWithoutVAT: Float!
+    shipment: Shipment!
     type: TypeProduct!
     unit: Unit
     updatedAt: Date
@@ -302,6 +303,18 @@ type SalesReportRevenueByWeekResponse {
 type SalesReportRevenueByYearResponse {
     month: Int!
     totalRevenue: Float!
+}
+
+type Shipment {
+    createdAt: Date
+    expiryDate: Date
+    id: Int!
+    inventory: [Inventory!]
+    manufactureDate: Date
+    receivedDate: Date
+    shimentCode: String
+    supplierName: String
+    updatedAt: Date
 }
 
 type Subscription {

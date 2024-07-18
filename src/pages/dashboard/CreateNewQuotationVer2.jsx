@@ -281,6 +281,7 @@ export default function CreateNewQuotationVer2({ sale, isCreate, customerFromDet
         );
       }
       dispatch(resetCart());
+      setLoadingSend(false);
     } catch (error) {
       console.error(error);
     }

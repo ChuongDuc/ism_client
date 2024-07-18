@@ -25,6 +25,16 @@ query ListAllProducts($input: ListAllProductsInput!) {
         unit
         formType
         description
+        shipment {
+          id
+          receivedDate
+          supplierName
+          inventory {
+            id
+            quantity
+          }
+          shimentCode
+        }
       }
     }
     pageInfo{

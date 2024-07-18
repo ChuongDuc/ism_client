@@ -1,10 +1,14 @@
 import PropTypes from 'prop-types';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Checkbox, MenuItem, TableCell, TableRow, Typography } from '@mui/material';
+import { loader } from 'graphql.macro';
+import { useQuery } from '@apollo/client';
 import { fVietNamCurrency } from '../../utils/formatNumber';
 import { TableMoreMenu } from '../table';
 import Iconify from '../Iconify';
 
+// ----------------------------------------------------------------------
+const LIST_ALL_INVENTORY = loader('../../graphql/queries/inventory/listAllInventory.graphql');
 // ----------------------------------------------------------------------
 
 ProductDialogTableRow.propTypes = {
@@ -30,6 +34,8 @@ export default function ProductDialogTableRow({
 
   const [openMenu, setOpenMenuActions] = useState(null);
 
+  const [inventory, setInventory] = useState([]);
+
   const handleOpenMenu = (event) => {
     setOpenMenuActions(event.currentTarget);
   };
@@ -37,6 +43,20 @@ export default function ProductDialogTableRow({
   const handleCloseMenu = () => {
     setOpenMenuActions(null);
   };
+
+  const { data: allInventory } = useQuery(LIST_ALL_INVENTORY, {
+    variables: {
+      input: {
+        searchQuery: name,
+      },
+    },
+  });
+
+  useEffect(() => {
+    if (allInventory) {
+      setInventory(allInventory.listAllInventory?.edges.map((edge) => edge.node)[0]);
+    }
+  }, [allInventory]);
 
   return (
     <TableRow hover selected={selected} onDoubleClick={selectRow}>
@@ -61,6 +81,9 @@ export default function ProductDialogTableRow({
       <TableCell align="left">{fVietNamCurrency(priceWithVAT)} </TableCell>
 
       <TableCell align="left">{fVietNamCurrency(Number(priceWithVAT) * Number(weight))}</TableCell>
+
+      <TableCell align="left">{inventory ? inventory.quantity : 0}</TableCell>
+
       <TableCell align="right">
         <TableMoreMenu
           open={openMenu}

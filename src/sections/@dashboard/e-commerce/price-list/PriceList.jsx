@@ -56,6 +56,9 @@ export const TABLE_HEAD_SHAPE_PRODUCT = [
   { id: 'totalPriceWithoutVAT', label: 'Tổng giá chưa VAT', align: 'left' },
   { id: 'priceWithVAT', label: 'Giá có VAT', align: 'left' },
   { id: 'totalPriceWithVAT', label: 'Tổng giá có VAT', align: 'left' },
+  { id: 'quantity', label: 'Số lượng', align: 'left' },
+  { id: 'shipment', label: 'Lô hàng', align: 'left' },
+  { id: 'receivedDate', label: 'Ngày nhập', align: 'left' },
   { id: '' },
 ];
 

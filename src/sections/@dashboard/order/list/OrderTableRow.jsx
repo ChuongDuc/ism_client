@@ -144,7 +144,10 @@ export default function OrderTableRow({ row, selected, idx, onViewRow, onDeleteR
                         handleCloseMenu();
                       }}
                       sx={{ color: 'error.main' }}
-                      disabled={formatStatus(status) === OrderStatus.completed}
+                      disabled={
+                        formatStatus(status) !== OrderStatus.new &&
+                        formatStatus(status) !== OrderStatus.quotationAndDeal
+                      }
                     >
                       <Iconify icon={'eva:trash-2-outline'} />
                       Xóa đơn hàng
