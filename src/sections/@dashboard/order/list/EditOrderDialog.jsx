@@ -23,19 +23,21 @@ import { loader } from 'graphql.macro';
 import { useMutation } from '@apollo/client';
 import { useSnackbar } from 'notistack';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
+import { LoadingButton } from '@mui/lab';
 import { FormProvider } from '../../../../components/hook-form';
 import { formatStatus, reformatStatus } from '../../../../utils/getOrderFormat';
-import { Role } from '../../../../constant';
+import { OrderStatus, Role } from '../../../../constant';
 import useAuth from '../../../../hooks/useAuth';
 import { fddMMYYYYWithSlash } from '../../../../utils/formatTime';
 import Iconify from '../../../../components/Iconify';
 import CommonBackdrop from '../../../../components/CommonBackdrop';
-import { fVietNamCurrency } from '../../../../utils/formatNumber';
+import { convertStringToNumber, fVietNamCurrency } from '../../../../utils/formatNumber';
 
 const UPDATE_STATUS_FOR_ACCOUNTANT = loader(
   '../../../../graphql/mutations/order/updateStatusOrderOfAccountant.graphql'
 );
 const UPDATE_STATUS_FOR_DRIVER = loader('../../../../graphql/mutations/order/updateStatusOrderForDriver.graphql');
+const CREATE_PAYMENT_INFO = loader('../../../../graphql/mutations/paymentInfor/createPaymentInfo.graphql');
 
 // ----------------------------------------------------------------------
 const OrderStatusDriverArr = [
@@ -85,6 +87,15 @@ export default function EditOrderDialog({ isOpen, onClose, row, refetchData, isO
   );
 
   const [updateStatusForDriver, { loading: loadingUpdateForDriver }] = useMutation(UPDATE_STATUS_FOR_DRIVER, {
+    onCompleted: async (res) => {
+      if (res) {
+        return res;
+      }
+      return null;
+    },
+  });
+
+  const [createPayment] = useMutation(CREATE_PAYMENT_INFO, {
     onCompleted: async (res) => {
       if (res) {
         return res;
@@ -143,36 +154,36 @@ export default function EditOrderDialog({ isOpen, onClose, row, refetchData, isO
     onClose();
     reset();
   };
-  const updateDocumentByDriver = async () => {
-    const response = await updateStatusForDriver({
-      variables: {
-        input: {
-          orderId: Number(row?.order?.id),
-          userId: Number(user.id),
-          statusOrder:
-            formatStatus(row?.order?.status) === 'Chốt đơn - Tạo lệnh xuất hàng'
-              ? reformatStatus(OrderStatusDriverArr[0].status)
-              : reformatStatus(values.status),
-          deliverOrder: {
-            deliverOrderId: Number(row?.id),
-          },
-        },
-      },
-      onError(error) {
-        enqueueSnackbar(`Cập nhật không thành công. ${error}`, {
-          variant: 'warning',
-        });
-      },
-    });
-    if (!response.errors) {
-      enqueueSnackbar('Cập nhật thành công', {
-        variant: 'success',
-      });
-      handleClose();
-      await refetchData();
-    }
-    setIsLoading(false);
-  };
+  // const updateDocumentByDriver = async () => {
+  //   const response = await updateStatusForDriver({
+  //     variables: {
+  //       input: {
+  //         orderId: Number(row?.order?.id),
+  //         userId: Number(user.id),
+  //         statusOrder:
+  //           formatStatus(row?.order?.status) === 'Chốt đơn - Tạo lệnh xuất hàng'
+  //             ? reformatStatus(OrderStatusDriverArr[0].status)
+  //             : reformatStatus(values.status),
+  //         deliverOrder: {
+  //           deliverOrderId: Number(row?.id),
+  //         },
+  //       },
+  //     },
+  //     onError(error) {
+  //       enqueueSnackbar(`Cập nhật không thành công. ${error}`, {
+  //         variant: 'warning',
+  //       });
+  //     },
+  //   });
+  //   if (!response.errors) {
+  //     enqueueSnackbar('Cập nhật thành công', {
+  //       variant: 'success',
+  //     });
+  //     handleClose();
+  //     await refetchData();
+  //   }
+  //   setIsLoading(false);
+  // };
 
   const updateStatusByDriver = async (orderStatus) => {
     const response = await updateStatusForDriver({
@@ -202,36 +213,36 @@ export default function EditOrderDialog({ isOpen, onClose, row, refetchData, isO
     setIsLoading(false);
   };
 
-  const updateDocumentByAccountant = async () => {
-    const response = await updateStatusForAccountant({
-      variables: {
-        input: {
-          orderId: Number(row?.order?.orderId),
-          userId: Number(user.id),
-          statusOrder:
-            formatStatus(row?.order?.status) === OrderStatusDriverArr[1].status
-              ? reformatStatus(OrderStatusAccountantArr[0].status)
-              : reformatStatus(values.status),
-          deliverOrder: {
-            deliverOrderId: Number(row?.id),
-          },
-        },
-      },
-      onError(error) {
-        enqueueSnackbar(`Cập nhật không thành công. ${error}`, {
-          variant: 'warning',
-        });
-      },
-    });
-    if (!response.errors) {
-      enqueueSnackbar('Cập nhật thành công', {
-        variant: 'success',
-      });
-      handleClose();
-      await refetchData();
-    }
-    setIsLoading(false);
-  };
+  // const updateDocumentByAccountant = async () => {
+  //   const response = await updateStatusForAccountant({
+  //     variables: {
+  //       input: {
+  //         orderId: Number(row?.order?.orderId),
+  //         userId: Number(user.id),
+  //         statusOrder:
+  //           formatStatus(row?.order?.status) === OrderStatusDriverArr[1].status
+  //             ? reformatStatus(OrderStatusAccountantArr[0].status)
+  //             : reformatStatus(values.status),
+  //         deliverOrder: {
+  //           deliverOrderId: Number(row?.id),
+  //         },
+  //       },
+  //     },
+  //     onError(error) {
+  //       enqueueSnackbar(`Cập nhật không thành công. ${error}`, {
+  //         variant: 'warning',
+  //       });
+  //     },
+  //   });
+  //   if (!response.errors) {
+  //     enqueueSnackbar('Cập nhật thành công', {
+  //       variant: 'success',
+  //     });
+  //     handleClose();
+  //     await refetchData();
+  //   }
+  //   setIsLoading(false);
+  // };
 
   const updateStatusByAccountant = async (orderStatus) => {
     const response = await updateStatusForAccountant({
@@ -264,10 +275,33 @@ export default function EditOrderDialog({ isOpen, onClose, row, refetchData, isO
   const onSubmit = async () => {
     try {
       setIsLoading(true);
-      if (user.role === Role.driver) {
-        await updateDocumentByDriver();
-      } else {
-        await updateDocumentByAccountant();
+      const response = await createPayment({
+        variables: {
+          input: {
+            createById: Number(user.id),
+            customerId: Number(row?.customer?.id),
+            orderId: Number(row?.order?.id),
+            money: convertStringToNumber(
+              Number(row?.order?.totalMoney) +
+                Number(row?.order?.freightPrice) +
+                Number((row?.order?.totalMoney * row?.order?.VAT) / 100)
+            ),
+            description: 'KH thanh toán qua lái xe' || null,
+          },
+        },
+        onError: (error) => {
+          enqueueSnackbar(`Tạo thanh toán không thành công. ${error}`, {
+            variant: 'error',
+          });
+        },
+      });
+      if (!response.errors) {
+        enqueueSnackbar('Tạo thanh toán thành công', {
+          variant: 'success',
+        });
+        reset();
+        handleClose();
+        await refetchData();
       }
     } catch (error) {
       console.error(error);
@@ -525,6 +559,17 @@ export default function EditOrderDialog({ isOpen, onClose, row, refetchData, isO
                     {option.status}
                   </Button>
                 ))}
+                {user?.role === Role.driver && (
+                  <LoadingButton
+                    size="small"
+                    disabled={formatStatus(row?.order.status) === OrderStatus.completed}
+                    type="submit"
+                    variant="contained"
+                    loading={isSubmitting}
+                  >
+                    Xác nhận KH thanh toán
+                  </LoadingButton>
+                )}
               </Stack>
             </Stack>
           </DialogContent>
