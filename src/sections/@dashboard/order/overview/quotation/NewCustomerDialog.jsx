@@ -6,10 +6,10 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { useForm } from 'react-hook-form';
 import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
 import { LoadingButton } from '@mui/lab';
-import { useEffect, useState } from 'react';
 import { useSnackbar } from 'notistack';
 import { loader } from 'graphql.macro';
 import { useMutation, useQuery } from '@apollo/client';
+import { useEffect, useState } from 'react';
 import useAuth from '../../../../../hooks/useAuth';
 import { FormProvider, RHFTextField } from '../../../../../components/hook-form';
 import Iconify from '../../../../../components/Iconify';
@@ -59,7 +59,7 @@ export default function NewCustomerDialog({
   const regexPhoneNumber = /([+84|84]+(3|5|7|8|9|1[2|6|8|9]))+([0-9]{8})\b/;
 
   const NewCreateCustomerSchema = Yup.object().shape({
-    customerName: Yup.string().required('Hãy nhập tên khách hàng'),
+    name: Yup.string().required('Hãy nhập tên khách hàng'),
     phoneNumber: Yup.string()
       .required('Hãy nhập số điện thoại')
       .matches(/([+84|84|0]+(3|5|7|8|9|1[2|6|8|9]))+([0-9]{8})\b/, 'Không đúng định dạng số điện thoại')
@@ -183,33 +183,21 @@ export default function NewCustomerDialog({
               }
               sx={{ mb: 3 }}
             />
-            <RHFTextField name="company" label="Công ty" />
-            <RHFTextField name="address" label="Địa chỉ KH" />
-            <RHFTextField name="email" label="Email" />
+            <RHFTextField fullWidth name="company" label="Tên công ty" sx={{ mb: 3 }} />
+            <RHFTextField fullWidth name="address" label="Địa chỉ KH" sx={{ mb: 3 }} />
+            <RHFTextField fullWidth name="email" label="email" sx={{ mb: 3 }} />
           </>
         </DialogContent>
 
         <DialogActions>
-          {isExistCustomer ? (
-            <LoadingButton
-              type="submit"
-              variant="contained"
-              disabled
-              startIcon={<Iconify icon="eva:cloud-upload-fill" />}
-              loading={isSubmitting}
-            >
-              Tạo khách hàng mới
-            </LoadingButton>
-          ) : (
-            <LoadingButton
-              type="submit"
-              variant="contained"
-              startIcon={<Iconify icon="eva:cloud-upload-fill" />}
-              loading={isSubmitting}
-            >
-              Tạo khách hàng mới
-            </LoadingButton>
-          )}
+          <LoadingButton
+            type="submit"
+            variant="contained"
+            startIcon={<Iconify icon="eva:cloud-upload-fill" />}
+            loading={isSubmitting}
+          >
+            Tạo khách hàng mới
+          </LoadingButton>
 
           <CommonBackdrop loading={isSubmitting} />
         </DialogActions>
