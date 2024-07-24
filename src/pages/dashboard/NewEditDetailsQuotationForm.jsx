@@ -18,12 +18,10 @@ import useResponsive from '../../hooks/useResponsive';
 import AdditionalInfoForm from '../../sections/@dashboard/order/overview/quotation/AdditionalInfoForm';
 import PreviewQuotationCommonPDF from '../../sections/@dashboard/order/details/PreviewQuotationCommonPDF';
 import ProductsDialog from '../../components/dialog/ProductsDialog';
-import OrderOfQuotationListDialog from '../../sections/@dashboard/order/overview/quotation/OrderOfQuotationListDialog';
 import useAuth from '../../hooks/useAuth';
 import { useDispatch } from '../../redux/store';
 import { addProducts, deleteProducts } from '../../redux/slices/product';
 import { convertStringToNumber, fVietNamCurrency } from '../../utils/formatNumber';
-import CreateProductDialog from '../../components/dialog/CreateProductDialog';
 
 // ----------------------------------------------------------------------
 NewEditDetailsQuotationForm.propTypes = {
@@ -56,13 +54,13 @@ export default function NewEditDetailsQuotationForm({
   const dispatch = useDispatch();
 
   const { toggle: openFrom, onOpen: onOpenFrom, onClose: onCloseFrom } = useToggle();
-  const { toggle: openCustomerForm, onOpen: onOpenCustomerForm, onClose: onCloseCustomerForm } = useToggle();
-
-  const {
-    toggle: openCreateNewProduct,
-    onOpen: onOpenCreateNewProduct,
-    onClose: onCloseCreateNewProduct,
-  } = useToggle();
+  // const { toggle: openCustomerForm, onOpen: onOpenCustomerForm, onClose: onCloseCustomerForm } = useToggle();
+  //
+  // const {
+  //   toggle: openCreateNewProduct,
+  //   onOpen: onOpenCreateNewProduct,
+  //   onClose: onCloseCreateNewProduct,
+  // } = useToggle();
   const {
     control,
     setValue,
@@ -303,15 +301,15 @@ export default function NewEditDetailsQuotationForm({
             Thêm sản phẩm
           </Button>
 
-          <Button
-            size="small"
-            variant="contained"
-            startIcon={<Iconify icon="eva:plus-fill" />}
-            onClick={onOpenCreateNewProduct}
-            sx={{ flexShrink: 0, maxHeight: '38px', mx: 3 }}
-          >
-            Tạo sản phẩm
-          </Button>
+          {/* <Button */}
+          {/*  size="small" */}
+          {/*  variant="contained" */}
+          {/*  startIcon={<Iconify icon="eva:plus-fill" />} */}
+          {/*  onClick={onOpenCreateNewProduct} */}
+          {/*  sx={{ flexShrink: 0, maxHeight: '38px', mx: 3 }} */}
+          {/* > */}
+          {/*  Tạo sản phẩm */}
+          {/* </Button> */}
         </Stack>
 
         <AdditionalInfoForm />
@@ -356,19 +354,6 @@ export default function NewEditDetailsQuotationForm({
                   </PDFDownloadLink>
                 </Box>
                 <Box width="25%">
-                  <Button
-                    fullWidth
-                    size="small"
-                    variant="contained"
-                    disabled={isEmpty(values?.customer)}
-                    startIcon={<Iconify icon="carbon:recently-viewed" />}
-                    sx={{ flexShrink: 0, maxHeight: '26px' }}
-                    onClick={onOpenCustomerForm}
-                  >
-                    {mdUp ? 'Hợp đồng gần đây' : 'HĐ'}
-                  </Button>
-                </Box>
-                <Box width="25%">
                   <LoadingButton
                     fullWidth
                     size="small"
@@ -405,10 +390,10 @@ export default function NewEditDetailsQuotationForm({
         open={openFrom}
         onClose={onCloseFrom}
         onSelect={(products) => handleAdd(products)}
-        createNewProduct={onOpenCreateNewProduct}
+        // createNewProduct={onOpenCreateNewProduct}
       />
-      <CreateProductDialog open={openCreateNewProduct} onClose={onCloseCreateNewProduct} onSelect={handleAdd} />
-      <OrderOfQuotationListDialog open={openCustomerForm} onClose={onCloseCustomerForm} orders={orderSale} />
+      {/* <CreateProductDialog open={openCreateNewProduct} onClose={onCloseCreateNewProduct} onSelect={handleAdd} /> */}
+      {/* <OrderOfQuotationListDialog open={openCustomerForm} onClose={onCloseCustomerForm} orders={orderSale} /> */}
     </>
   );
 }

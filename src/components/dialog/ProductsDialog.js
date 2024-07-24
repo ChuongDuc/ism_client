@@ -1,17 +1,6 @@
 // noinspection DuplicatedCode,JSCheckFunctionSignatures,JSUnresolvedReference
 
-import {
-  Button,
-  Card,
-  Dialog,
-  IconButton,
-  Stack,
-  Table,
-  TableBody,
-  TableContainer,
-  Tooltip,
-  Typography,
-} from '@mui/material';
+import { Card, Dialog, IconButton, Stack, Table, TableBody, TableContainer, Tooltip, Typography } from '@mui/material';
 import PropTypes from 'prop-types';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { loader } from 'graphql.macro';
@@ -39,6 +28,7 @@ const TABLE_HEAD = [
   { id: 'totalPriceWithoutVAT', label: 'Tổng giá chưa VAT', align: 'left' },
   { id: 'priceWithVAT', label: 'Giá có VAT', align: 'left' },
   { id: 'totalPriceWithVAT', label: 'Tổng giá có VAT', align: 'left' },
+  { id: 'quantity', label: 'Số lượng', align: 'left' },
   { id: '' },
 ];
 
@@ -61,10 +51,10 @@ ProductsDialog.propTypes = {
   onClose: PropTypes.func,
   onSelect: PropTypes.func,
   open: PropTypes.bool,
-  createNewProduct: PropTypes.func,
+  // createNewProduct: PropTypes.func,
 };
 
-export default function ProductsDialog({ open, onClose, onSelect, createNewProduct }) {
+export default function ProductsDialog({ open, onClose, onSelect }) {
   const [tableData, setTableData] = useState([]);
   const [filterName, setFilterName] = useState('');
   const [filterCategory, setFilterCategory] = useState(DEFAULT_CATEGORY);
@@ -258,18 +248,18 @@ export default function ProductsDialog({ open, onClose, onSelect, createNewProdu
       <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ py: 2.5, px: 3 }}>
         <Typography variant="subtitle1"> Chọn sản phẩm </Typography>
 
-        <Button
-          size="small"
-          variant="outlined"
-          startIcon={<Iconify icon="eva:plus-fill" />}
-          sx={{ alignSelf: 'flex-end' }}
-          onClick={() => {
-            onClose();
-            createNewProduct();
-          }}
-        >
-          Tạo sản phẩm mới
-        </Button>
+        {/* <Button */}
+        {/*  size="small" */}
+        {/*  variant="outlined" */}
+        {/*  startIcon={<Iconify icon="eva:plus-fill" />} */}
+        {/*  sx={{ alignSelf: 'flex-end' }} */}
+        {/*  onClick={() => { */}
+        {/*    onClose(); */}
+        {/*    createNewProduct(); */}
+        {/*  }} */}
+        {/* > */}
+        {/*  Tạo sản phẩm mới */}
+        {/* </Button> */}
       </Stack>
 
       <Card>

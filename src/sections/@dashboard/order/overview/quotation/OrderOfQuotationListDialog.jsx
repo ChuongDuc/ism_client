@@ -36,7 +36,7 @@ export default function OrderOfQuotationListDialog({ open, onClose, orders }) {
                 {`Mã đơn: ${order?.invoiceNo?.slice(0, 17)}`}
               </Button>
               <Typography variant="subtitle2" sx={{ color: 'text.secondary' }}>{`Ngày tạo: ${fddMMYYYYWithSlash(
-                order?.createdAt
+                order?.createdAt ?? new Date()
               )}`}</Typography>
             </Stack>
           ))
